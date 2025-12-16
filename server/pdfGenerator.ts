@@ -8,16 +8,16 @@ const COMPANY_EMAIL = "contato@solarpro.com.br";
 const RESPONSIBLE_NAME = "Consultor Comercial";
 
 const COLORS = {
-  primary: "#1a5f7a",
-  secondary: "#159895",
-  accent: "#57c5b6",
-  dark: "#002b36",
-  text: "#333333",
-  textLight: "#666666",
-  background: "#f8fafc",
+  primary: "#33A851",
+  secondary: "#6CCF7F",
+  accent: "#FF9E32",
+  dark: "#1E5130",
+  text: "#2F3B3A",
+  textLight: "#6C7A75",
+  background: "#F3FBF5",
   white: "#ffffff",
-  success: "#10b981",
-  warning: "#f59e0b",
+  success: "#2ECC71",
+  warning: "#F6A623",
 };
 
 function formatCurrency(value: number): string {
