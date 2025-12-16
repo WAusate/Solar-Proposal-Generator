@@ -2,9 +2,23 @@ import PDFDocument from "pdfkit";
 import { Proposal } from "@shared/schema";
 
 const COMPANY_NAME = "SolarPro Energia";
-const COMPANY_ADDRESS = "Jaboatão dos Guararapes, PE";
+const COMPANY_ADDRESS = "Rua Dois, 25, Sala 101, Maranguape I, Paulista – PE. CEP 53444-380";
 const COMPANY_PHONE = "(81) 99999-9999";
 const COMPANY_EMAIL = "contato@solarpro.com.br";
+const RESPONSIBLE_NAME = "Consultor Comercial";
+
+const COLORS = {
+  primary: "#1a5f7a",
+  secondary: "#159895",
+  accent: "#57c5b6",
+  dark: "#002b36",
+  text: "#333333",
+  textLight: "#666666",
+  background: "#f8fafc",
+  white: "#ffffff",
+  success: "#10b981",
+  warning: "#f59e0b",
+};
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -15,241 +29,691 @@ function formatCurrency(value: number): string {
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("pt-BR");
+  const options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  };
+  return date.toLocaleDateString("pt-BR", options);
+}
+
+function drawRoundedRect(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fillColor: string
+) {
+  doc
+    .save()
+    .roundedRect(x, y, width, height, radius)
+    .fill(fillColor)
+    .restore();
+}
+
+function drawSectionHeader(
+  doc: PDFKit.PDFDocument,
+  title: string,
+  y: number,
+  pageWidth: number
+) {
+  const leftMargin = 50;
+  
+  doc
+    .save()
+    .rect(leftMargin, y, 4, 24)
+    .fill(COLORS.secondary);
+  
+  doc
+    .fontSize(14)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(title, leftMargin + 12, y + 5);
+  
+  doc.restore();
+  return y + 35;
+}
+
+function drawInfoCard(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  width: number,
+  title: string,
+  value: string,
+  subtitle?: string
+) {
+  const cardHeight = 70;
+  
+  drawRoundedRect(doc, x, y, width, cardHeight, 8, COLORS.background);
+  
+  doc
+    .rect(x, y, width, 4)
+    .fill(COLORS.secondary);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text(title.toUpperCase(), x + 12, y + 16, { width: width - 24 });
+  
+  doc
+    .fontSize(18)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(value, x + 12, y + 32, { width: width - 24 });
+  
+  if (subtitle) {
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor(COLORS.textLight)
+      .text(subtitle, x + 12, y + 54, { width: width - 24 });
+  }
+  
+  return y + cardHeight + 15;
 }
 
 export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const doc = new PDFDocument({
     size: "A4",
-    margins: { top: 50, bottom: 50, left: 50, right: 50 },
+    margins: { top: 0, bottom: 40, left: 50, right: 50 },
+    bufferPages: true,
   });
 
-  const pageWidth = doc.page.width - 100;
+  const pageWidth = doc.page.width;
+  const contentWidth = pageWidth - 100;
+  const leftMargin = 50;
 
+  // ============ PAGE 1: COVER ============
+  
   doc
-    .fontSize(24)
+    .rect(0, 0, pageWidth, 280)
+    .fill(COLORS.primary);
+  
+  doc
+    .rect(0, 260, pageWidth, 40)
+    .fill(COLORS.secondary);
+  
+  doc
+    .fontSize(12)
+    .font("Helvetica")
+    .fillColor(COLORS.white)
+    .text(COMPANY_NAME.toUpperCase(), leftMargin, 50);
+  
+  doc
+    .fontSize(42)
     .font("Helvetica-Bold")
-    .text("Proposta Comercial", { align: "center" });
-
-  doc.moveDown(0.5);
+    .fillColor(COLORS.white)
+    .text("PROPOSTA", leftMargin, 120);
+  
+  doc
+    .fontSize(42)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.accent)
+    .text("COMERCIAL", leftMargin, 165);
+  
   doc
     .fontSize(14)
     .font("Helvetica")
-    .fillColor("#666666")
-    .text(COMPANY_NAME, { align: "center" });
-
-  doc.moveDown(2);
-
+    .fillColor(COLORS.white)
+    .text(`Sistema Fotovoltaico`, leftMargin, 230);
+  
+  let currentY = 320;
+  
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 100, 10, COLORS.background);
+  
   doc
-    .fontSize(12)
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("CLIENTE", leftMargin + 20, currentY + 20);
+  
+  doc
+    .fontSize(22)
     .font("Helvetica-Bold")
-    .fillColor("#000000")
-    .text("DADOS DO CLIENTE", { underline: true });
-  doc.moveDown(0.5);
-
-  doc.font("Helvetica").fontSize(11);
-  doc.text(`Cliente: ${proposal.nomeCliente}`);
+    .fillColor(COLORS.dark)
+    .text(proposal.nomeCliente, leftMargin + 20, currentY + 38);
+  
   if (proposal.cidadeUf) {
-    doc.text(`Localização: ${proposal.cidadeUf}`);
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor(COLORS.textLight)
+      .text(proposal.cidadeUf, leftMargin + 20, currentY + 68);
   }
-  doc.text(`Data da Proposta: ${formatDate(proposal.dataProposta)}`);
-  doc.text(`Validade: ${proposal.validadeDias} dias corridos`);
-
-  doc.moveDown(1.5);
-
+  
+  const dateBoxX = pageWidth - 200;
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("DATA", dateBoxX, currentY + 20);
+  
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text("DADOS TÉCNICOS DO SISTEMA", { underline: true });
-  doc.moveDown(0.5);
-
-  doc.font("Helvetica").fontSize(11);
-  doc.text(`${proposal.potenciaKwp.toFixed(2)} kWp – Potência Proposta`);
-  doc.text(`${proposal.geracaoEstimadaKwh.toFixed(0)} kWh/mês – Geração Estimada`);
-  if (proposal.areaUtilM2) {
-    doc.text(`${proposal.areaUtilM2.toFixed(0)} m² – Área Útil`);
-  }
-
-  doc.moveDown(1.5);
-
+    .fillColor(COLORS.dark)
+    .text(formatDate(proposal.dataProposta), dateBoxX, currentY + 38);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("VALIDADE", dateBoxX, currentY + 60);
+  
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text("EQUIPAMENTOS PRINCIPAIS", { underline: true });
-  doc.moveDown(0.5);
-
-  const tableTop = doc.y;
-  const col1 = 50;
-  const col2 = 200;
-  const col3 = 450;
-  const rowHeight = 25;
-
-  doc.font("Helvetica-Bold").fontSize(10);
-  doc.text("ITEM", col1, tableTop);
-  doc.text("MODELO", col2, tableTop);
-  doc.text("QTD", col3, tableTop);
-
+    .fillColor(COLORS.dark)
+    .text(`${proposal.validadeDias} dias`, dateBoxX, currentY + 78);
+  
+  currentY += 130;
+  
+  // Mission section
+  currentY = drawSectionHeader(doc, "NOSSA MISSÃO E COMPROMISSO", currentY, contentWidth);
+  
   doc
-    .moveTo(col1, tableTop + 15)
-    .lineTo(col1 + pageWidth, tableTop + 15)
-    .stroke();
-
-  let currentY = tableTop + rowHeight;
-
-  doc.font("Helvetica").fontSize(10);
-  doc.text("Módulos Fotovoltaicos", col1, currentY);
-  doc.text(proposal.modeloModulo, col2, currentY);
-  doc.text(proposal.quantidadeModulo.toString(), col3, currentY);
-
-  currentY += rowHeight;
-  doc.text("Inversor(es)", col1, currentY);
-  doc.text(proposal.modeloInversor, col2, currentY);
-  doc.text(proposal.quantidadeInversor.toString(), col3, currentY);
-
-  if (proposal.outrosItens) {
-    currentY += rowHeight;
-    doc.text("Outros Itens", col1, currentY);
-    doc.text(proposal.outrosItens.substring(0, 50), col2, currentY);
-    doc.text("-", col3, currentY);
-  }
-
-  doc.y = currentY + rowHeight + 10;
-  doc.moveDown(1.5);
-
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor(COLORS.text)
+    .text(
+      "Somos uma empresa especializada no desenvolvimento de soluções de energia fotovoltaica para residências, empresas, indústrias e agronegócios.",
+      leftMargin,
+      currentY,
+      { width: contentWidth, align: "justify", lineGap: 4 }
+    );
+  
+  currentY = doc.y + 12;
+  
   doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .text("GARANTIAS INCLUÍDAS", { underline: true });
-  doc.moveDown(0.5);
-
-  doc.font("Helvetica").fontSize(10);
-
-  const garantiaTableTop = doc.y;
-
-  doc.font("Helvetica-Bold");
-  doc.text("NOSSOS SERVIÇOS", col1, garantiaTableTop);
-  doc.text("MÓDULOS FOTOVOLTAICOS", col2, garantiaTableTop);
-  doc.text("INVERSORES", col3, garantiaTableTop);
-
-  doc
-    .moveTo(col1, garantiaTableTop + 15)
-    .lineTo(col1 + pageWidth, garantiaTableTop + 15)
-    .stroke();
-
-  const garantiaRow1 = garantiaTableTop + 25;
-  doc.font("Helvetica").fontSize(9);
-  doc.text(proposal.garantiaServicos, col1, garantiaRow1, { width: 130 });
-  doc.text(`EQUIPAMENTO: ${proposal.garantiaModulosEquipamento}`, col2, garantiaRow1, { width: 200 });
-  doc.text(proposal.garantiaInversor, col3, garantiaRow1, { width: 100 });
-
-  const garantiaRow2 = garantiaRow1 + 20;
-  doc.text("", col1, garantiaRow2);
-  doc.text(`DESEMPENHO: ${proposal.garantiaModulosPerformance}`, col2, garantiaRow2, { width: 200 });
-
-  doc.y = garantiaRow2 + 30;
-  doc.moveDown(0.5);
-  doc
-    .fontSize(9)
-    .fillColor("#666666")
-    .text("A garantia dos equipamentos é de responsabilidade dos fabricantes.", { align: "center" });
-
-  doc.moveDown(2);
-  doc.fillColor("#000000");
-
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .text("CONDIÇÕES COMERCIAIS", { underline: true });
-  doc.moveDown(0.5);
-
-  const investimentoY = doc.y;
-  doc.font("Helvetica-Bold").fontSize(10);
-  doc.text("INVESTIMENTO", col1, investimentoY);
-  doc.text("VALOR", col2, investimentoY);
-
-  doc
-    .moveTo(col1, investimentoY + 15)
-    .lineTo(col1 + pageWidth, investimentoY + 15)
-    .stroke();
-
-  const valorRow = investimentoY + 25;
-  doc.font("Helvetica").fontSize(11);
-  doc.text("À vista", col1, valorRow);
-  doc.font("Helvetica-Bold").fontSize(14);
-  doc.text(formatCurrency(proposal.valorTotalAvista), col2, valorRow);
-
-  doc.y = valorRow + 40;
-  doc.moveDown(2);
-
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .fillColor("#000000")
-    .text("CRONOGRAMA DE EXECUÇÃO", { underline: true });
-  doc.moveDown(0.5);
-
-  doc.font("Helvetica").fontSize(10);
-  const cronogramaItems = [
-    "A: Aprovação da proposta",
-    "D: Validação do projeto pelo setor técnico e assinatura de contrato",
-    "D+30 dias: Encomenda dos equipamentos e preparação da infraestrutura",
-    "D+60 dias: Montagem do sistema",
-    "D+90 dias: Testes e homologação na distribuidora",
+    .text(
+      "Nosso compromisso é garantir a produção de energia e performance do seu sistema, oferecendo soluções exclusivas de financiamento para viabilizar a implementação do seu sistema fotovoltaico.",
+      leftMargin,
+      currentY,
+      { width: contentWidth, align: "justify", lineGap: 4 }
+    );
+  
+  currentY = doc.y + 30;
+  
+  // How it works
+  currentY = drawSectionHeader(doc, "COMO FUNCIONA A ENERGIA SOLAR", currentY, contentWidth);
+  
+  const steps = [
+    { title: "Painéis Solares", desc: "Os painéis captam a energia do Sol e a transformam em energia elétrica." },
+    { title: "Inversor", desc: "Converte a energia gerada em formato idêntico ao fornecido pela distribuidora." },
+    { title: "Quadro de Distribuição", desc: "A energia é conectada para uso em qualquer equipamento." },
+    { title: "Medidor Bidirecional", desc: "Mede o consumo e a energia injetada na rede." },
+    { title: "Rede de Distribuição", desc: "Absorve excedentes e fornece energia quando necessário." },
   ];
-
-  cronogramaItems.forEach((item) => {
-    doc.text(`• ${item}`);
-    doc.moveDown(0.3);
+  
+  steps.forEach((step, index) => {
+    const stepY = currentY + index * 32;
+    
+    doc
+      .save()
+      .circle(leftMargin + 10, stepY + 8, 10)
+      .fill(COLORS.secondary);
+    
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.white)
+      .text((index + 1).toString(), leftMargin + 6, stepY + 4);
+    
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.dark)
+      .text(step.title, leftMargin + 30, stepY);
+    
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor(COLORS.textLight)
+      .text(step.desc, leftMargin + 30, stepY + 14, { width: contentWidth - 40 });
+    
+    doc.restore();
   });
 
-  doc.moveDown(2);
-
+  // ============ PAGE 2: TECHNICAL SPECS ============
+  doc.addPage();
+  
   doc
-    .fontSize(12)
+    .rect(0, 0, pageWidth, 60)
+    .fill(COLORS.primary);
+  
+  doc
+    .fontSize(18)
     .font("Helvetica-Bold")
-    .text("SOBRE NÓS", { underline: true });
-  doc.moveDown(0.5);
-
-  doc.font("Helvetica").fontSize(10);
-  doc.text(
-    "Somos uma empresa especializada no desenvolvimento de soluções de energia fotovoltaica. " +
-    "Nosso compromisso é oferecer sistemas de alta qualidade, com equipamentos de primeira linha " +
-    "e instalação profissional, garantindo economia e sustentabilidade para nossos clientes.",
-    { align: "justify" }
+    .fillColor(COLORS.white)
+    .text("DIMENSIONAMENTO DO SISTEMA", leftMargin, 22);
+  
+  currentY = 90;
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor(COLORS.text)
+    .text(
+      "O sistema foi dimensionado baseando-se na análise das imagens por satélite e em seu consumo energético mensal, adotando-se como premissa que a área disponível é adequada para a instalação.",
+      leftMargin,
+      currentY,
+      { width: contentWidth, align: "justify", lineGap: 4 }
+    );
+  
+  currentY = doc.y + 25;
+  
+  // Technical cards
+  const cardWidth = (contentWidth - 20) / 3;
+  
+  drawInfoCard(
+    doc,
+    leftMargin,
+    currentY,
+    cardWidth,
+    "Potência Proposta",
+    `${proposal.potenciaKwp.toFixed(2)} kWp`,
+    "Capacidade do sistema"
   );
-
-  doc.moveDown(1);
-  doc.text(
-    "Contamos com parcerias com os principais bancos para análise de financiamento, " +
-    "facilitando o acesso à energia solar para residências e empresas.",
-    { align: "justify" }
+  
+  drawInfoCard(
+    doc,
+    leftMargin + cardWidth + 10,
+    currentY,
+    cardWidth,
+    "Geração Estimada",
+    `${proposal.geracaoEstimadaKwh.toFixed(0)} kWh`,
+    "Por mês"
   );
-
-  const footerY = doc.page.height - 80;
+  
+  drawInfoCard(
+    doc,
+    leftMargin + (cardWidth + 10) * 2,
+    currentY,
+    cardWidth,
+    "Área Útil",
+    `${proposal.areaUtilM2?.toFixed(0) || "—"} m²`,
+    "Espaço necessário"
+  );
+  
+  currentY += 100;
+  
+  // Equipment section
+  currentY = drawSectionHeader(doc, "EQUIPAMENTOS PRINCIPAIS", currentY, contentWidth);
+  
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 30, 5, COLORS.primary);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.white)
+    .text("ITEM", leftMargin + 15, currentY + 10)
+    .text("MODELO", leftMargin + 140, currentY + 10)
+    .text("QTD", leftMargin + contentWidth - 50, currentY + 10);
+  
+  currentY += 35;
+  
+  // Modules row
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 35, 3, COLORS.background);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text("Módulos Fotovoltaicos", leftMargin + 15, currentY + 12);
+  
   doc
     .fontSize(9)
-    .fillColor("#666666")
-    .text(
-      `${COMPANY_NAME} | ${COMPANY_ADDRESS}`,
-      50,
-      footerY,
-      { align: "center", width: pageWidth }
-    );
-  doc.text(
-    `${COMPANY_PHONE} | ${COMPANY_EMAIL}`,
-    50,
-    footerY + 12,
-    { align: "center", width: pageWidth }
-  );
-
+    .font("Helvetica")
+    .fillColor(COLORS.text)
+    .text(proposal.modeloModulo, leftMargin + 140, currentY + 12, { width: 280 });
+  
   doc
-    .fontSize(8)
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.secondary)
+    .text(proposal.quantidadeModulo.toString(), leftMargin + contentWidth - 50, currentY + 12);
+  
+  currentY += 40;
+  
+  // Inverter row
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 35, 3, COLORS.white);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text("Inversor(es)", leftMargin + 15, currentY + 12);
+  
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.text)
+    .text(proposal.modeloInversor, leftMargin + 140, currentY + 12, { width: 280 });
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.secondary)
+    .text(proposal.quantidadeInversor.toString(), leftMargin + contentWidth - 50, currentY + 12);
+  
+  currentY += 55;
+  
+  // Warranty section
+  currentY = drawSectionHeader(doc, "GARANTIAS INCLUÍDAS", currentY, contentWidth);
+  
+  const warrantyWidth = (contentWidth - 20) / 3;
+  
+  // Services warranty
+  drawRoundedRect(doc, leftMargin, currentY, warrantyWidth, 80, 8, COLORS.background);
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("NOSSOS SERVIÇOS", leftMargin + 12, currentY + 12, { width: warrantyWidth - 24 });
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text("Instalação", leftMargin + 12, currentY + 30);
+  doc
+    .fontSize(16)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.secondary)
+    .text(proposal.garantiaServicos, leftMargin + 12, currentY + 50);
+  
+  // Modules warranty
+  drawRoundedRect(doc, leftMargin + warrantyWidth + 10, currentY, warrantyWidth, 80, 8, COLORS.background);
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("MÓDULOS FOTOVOLTAICOS", leftMargin + warrantyWidth + 22, currentY + 12, { width: warrantyWidth - 24 });
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.dark)
+    .text(`Equipamento: ${proposal.garantiaModulosEquipamento}`, leftMargin + warrantyWidth + 22, currentY + 35);
+  doc
+    .text(`Desempenho: ${proposal.garantiaModulosPerformance}`, leftMargin + warrantyWidth + 22, currentY + 55);
+  
+  // Inverter warranty
+  drawRoundedRect(doc, leftMargin + (warrantyWidth + 10) * 2, currentY, warrantyWidth, 80, 8, COLORS.background);
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("INVERSORES", leftMargin + (warrantyWidth + 10) * 2 + 12, currentY + 12, { width: warrantyWidth - 24 });
+  doc
+    .fontSize(16)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.secondary)
+    .text(proposal.garantiaInversor, leftMargin + (warrantyWidth + 10) * 2 + 12, currentY + 45);
+  
+  currentY += 100;
+  
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("Obs: A garantia dos equipamentos é de responsabilidade dos fabricantes.", leftMargin, currentY, {
+      width: contentWidth,
+      align: "center",
+    });
+  
+  currentY += 35;
+  
+  // Timeline section
+  currentY = drawSectionHeader(doc, "CRONOGRAMA DE EXECUÇÃO", currentY, contentWidth);
+  
+  const timelineSteps = [
+    { day: "Dia A", title: "Aprovação da Proposta", desc: "Comercial" },
+    { day: "Dia D", title: "Validação Técnica", desc: "Assinatura do contrato" },
+    { day: "D+30", title: "Preparação", desc: "Encomenda e infraestrutura" },
+    { day: "D+60", title: "Instalação", desc: "Montagem do sistema" },
+    { day: "D+90", title: "Conclusão", desc: "Testes e homologação" },
+  ];
+  
+  const stepWidth = contentWidth / 5;
+  
+  timelineSteps.forEach((step, index) => {
+    const stepX = leftMargin + index * stepWidth;
+    
+    doc
+      .save()
+      .circle(stepX + stepWidth / 2, currentY + 15, 18)
+      .fill(index === 0 ? COLORS.secondary : COLORS.background);
+    
+    doc
+      .fontSize(8)
+      .font("Helvetica-Bold")
+      .fillColor(index === 0 ? COLORS.white : COLORS.secondary)
+      .text(step.day, stepX, currentY + 10, { width: stepWidth, align: "center" });
+    
+    if (index < timelineSteps.length - 1) {
+      doc
+        .moveTo(stepX + stepWidth / 2 + 20, currentY + 15)
+        .lineTo(stepX + stepWidth - 5, currentY + 15)
+        .strokeColor(COLORS.accent)
+        .lineWidth(2)
+        .stroke();
+    }
+    
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.dark)
+      .text(step.title, stepX, currentY + 40, { width: stepWidth, align: "center" });
+    
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor(COLORS.textLight)
+      .text(step.desc, stepX, currentY + 55, { width: stepWidth, align: "center" });
+    
+    doc.restore();
+  });
+
+  // ============ PAGE 3: INVESTMENT ============
+  doc.addPage();
+  
+  doc
+    .rect(0, 0, pageWidth, 60)
+    .fill(COLORS.primary);
+  
+  doc
+    .fontSize(18)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.white)
+    .text("INVESTIMENTO E CONDIÇÕES", leftMargin, 22);
+  
+  currentY = 90;
+  
+  // Investment highlight box
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 120, 12, COLORS.background);
+  
+  doc
+    .rect(leftMargin, currentY, 6, 120)
+    .fill(COLORS.secondary);
+  
+  doc
+    .fontSize(12)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("VALOR DO INVESTIMENTO", leftMargin + 25, currentY + 25);
+  
+  doc
+    .fontSize(36)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(formatCurrency(proposal.valorTotalAvista), leftMargin + 25, currentY + 50);
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("Pagamento à vista", leftMargin + 25, currentY + 92);
+  
+  currentY += 150;
+  
+  // What's included
+  currentY = drawSectionHeader(doc, "O QUE ESTÁ INCLUSO", currentY, contentWidth);
+  
+  const includedItems = [
+    "Todos os equipamentos descritos nesta proposta",
+    "Projeto técnico completo",
+    "Materiais e estruturas de fixação",
+    "Mão de obra especializada para instalação",
+    "Homologação junto à distribuidora de energia",
+    "Suporte técnico durante todo o processo",
+  ];
+  
+  includedItems.forEach((item, index) => {
+    const itemY = currentY + index * 28;
+    
+    doc
+      .save()
+      .circle(leftMargin + 8, itemY + 6, 6)
+      .fill(COLORS.success);
+    
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.white)
+      .text("✓", leftMargin + 4, itemY + 2);
+    
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor(COLORS.text)
+      .text(item, leftMargin + 25, itemY);
+    
+    doc.restore();
+  });
+  
+  currentY += includedItems.length * 28 + 30;
+  
+  // Financing section
+  currentY = drawSectionHeader(doc, "SOLUÇÕES FINANCEIRAS", currentY, contentWidth);
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor(COLORS.text)
     .text(
-      `Esta proposta é válida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de envio.`,
-      50,
-      footerY + 30,
-      { align: "center", width: pageWidth }
+      "Temos parcerias com diversos bancos como Santander, BV Financeira, Sol Fácil, Credisolaris, dentre outros. Faça uma análise da sua taxa real conosco.",
+      leftMargin,
+      currentY,
+      { width: contentWidth, align: "justify", lineGap: 4 }
     );
+  
+  currentY = doc.y + 40;
+  
+  // Validity section
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 70, 10, COLORS.warning + "15");
+  
+  doc
+    .rect(leftMargin, currentY, contentWidth, 4)
+    .fill(COLORS.warning);
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text("VALIDADE DA PROPOSTA", leftMargin + 20, currentY + 18);
+  
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.text)
+    .text(
+      `Esta proposta é válida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de emissão (${formatDate(proposal.dataProposta)}).`,
+      leftMargin + 20,
+      currentY + 38,
+      { width: contentWidth - 40 }
+    );
+  
+  currentY += 100;
+  
+  // Signature section
+  currentY = drawSectionHeader(doc, "ACEITE DA PROPOSTA", currentY, contentWidth);
+  
+  const signatureWidth = (contentWidth - 40) / 2;
+  
+  doc
+    .moveTo(leftMargin, currentY + 50)
+    .lineTo(leftMargin + signatureWidth, currentY + 50)
+    .strokeColor(COLORS.textLight)
+    .lineWidth(1)
+    .stroke();
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(proposal.nomeCliente, leftMargin, currentY + 58, { width: signatureWidth, align: "center" });
+  
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("Cliente", leftMargin, currentY + 74, { width: signatureWidth, align: "center" });
+  
+  doc
+    .moveTo(leftMargin + signatureWidth + 40, currentY + 50)
+    .lineTo(leftMargin + contentWidth, currentY + 50)
+    .strokeColor(COLORS.textLight)
+    .lineWidth(1)
+    .stroke();
+  
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(RESPONSIBLE_NAME, leftMargin + signatureWidth + 40, currentY + 58, { width: signatureWidth, align: "center" });
+  
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("Responsável Comercial", leftMargin + signatureWidth + 40, currentY + 74, { width: signatureWidth, align: "center" });
+
+  // ============ FOOTER ON ALL PAGES ============
+  const pages = doc.bufferedPageRange();
+  for (let i = 0; i < pages.count; i++) {
+    doc.switchToPage(i);
+    
+    const footerY = doc.page.height - 35;
+    
+    doc
+      .rect(0, footerY - 5, pageWidth, 40)
+      .fill(COLORS.dark);
+    
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor(COLORS.white)
+      .text(
+        `${COMPANY_NAME} | ${COMPANY_ADDRESS}`,
+        leftMargin,
+        footerY + 5,
+        { width: contentWidth - 60, align: "left" }
+      );
+    
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor(COLORS.white)
+      .text(
+        `${i + 1} / ${pages.count}`,
+        pageWidth - 80,
+        footerY + 5,
+        { width: 30, align: "right" }
+      );
+  }
 
   return doc;
 }
