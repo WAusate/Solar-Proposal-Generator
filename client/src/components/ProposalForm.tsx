@@ -5,6 +5,8 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, User, Zap, Package, Shield, DollarSign, FileDown, Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import FormSection from "./FormSection";
 import { cn } from "@/lib/utils";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const proposalSchema = z.object({
   nomeCliente: z.string().min(1, "Nome do cliente é obrigatório"),
@@ -38,12 +41,8 @@ const proposalSchema = z.object({
 
 type ProposalFormData = z.infer<typeof proposalSchema>;
 
-interface ProposalFormProps {
-  onSubmit?: (data: ProposalFormData) => void;
-}
-
-export default function ProposalForm({ onSubmit }: ProposalFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function ProposalForm() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<ProposalFormData>({
@@ -69,24 +68,42 @@ export default function ProposalForm({ onSubmit }: ProposalFormProps) {
     },
   });
 
-  const handleSubmit = async (data: ProposalFormData) => {
-    setIsSubmitting(true);
-    
-    // todo: remove mock functionality
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("Proposal submitted:", data);
-    
-    toast({
-      title: "Proposta gerada com sucesso!",
-      description: `Proposta para ${data.nomeCliente} criada.`,
-    });
-    
-    if (onSubmit) {
-      onSubmit(data);
-    }
-    
-    setIsSubmitting(false);
+  const createProposalMutation = useMutation({
+    mutationFn: async (data: ProposalFormData) => {
+      const payload = {
+        ...data,
+        dataProposta: format(data.dataProposta, "yyyy-MM-dd"),
+        areaUtilM2: data.areaUtilM2 || null,
+        cidadeUf: data.cidadeUf || null,
+        outrosItens: data.outrosItens || null,
+      };
+      const response = await apiRequest("POST", "/api/proposals", payload);
+      return response.json();
+    },
+    onSuccess: async (proposal) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
+      
+      toast({
+        title: "Proposta criada com sucesso!",
+        description: `Iniciando download do PDF...`,
+      });
+      
+      window.open(`/api/proposals/${proposal.id}/pdf`, "_blank");
+      
+      setLocation("/propostas");
+    },
+    onError: (error) => {
+      console.error("Error creating proposal:", error);
+      toast({
+        title: "Erro ao criar proposta",
+        description: "Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (data: ProposalFormData) => {
+    createProposalMutation.mutate(data);
   };
 
   const formatCurrency = (value: number) => {
@@ -372,10 +389,10 @@ export default function ProposalForm({ onSubmit }: ProposalFormProps) {
           type="submit"
           size="lg"
           className="w-full md:w-auto gap-2"
-          disabled={isSubmitting}
+          disabled={createProposalMutation.isPending}
           data-testid="button-generate-pdf"
         >
-          {isSubmitting ? (
+          {createProposalMutation.isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Gerando PDF...

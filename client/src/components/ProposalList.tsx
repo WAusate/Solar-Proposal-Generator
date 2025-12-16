@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileDown, Search, FileText, Plus } from "lucide-react";
+import { FileDown, Search, FileText, Plus, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,58 +17,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-
-interface Proposal {
-  id: string;
-  nomeCliente: string;
-  dataProposta: Date;
-  potenciaKwp: number;
-  valorTotal: number;
-  cidadeUf?: string;
-}
-
-// todo: remove mock functionality
-const mockProposals: Proposal[] = [
-  {
-    id: "1",
-    nomeCliente: "João Silva Santos",
-    dataProposta: new Date(2025, 11, 15),
-    potenciaKwp: 4.27,
-    valorTotal: 11537.92,
-    cidadeUf: "Recife/PE",
-  },
-  {
-    id: "2",
-    nomeCliente: "Maria Oliveira Costa",
-    dataProposta: new Date(2025, 11, 14),
-    potenciaKwp: 6.55,
-    valorTotal: 18450.0,
-    cidadeUf: "Jaboatão dos Guararapes/PE",
-  },
-  {
-    id: "3",
-    nomeCliente: "Pedro Almeida Ferreira",
-    dataProposta: new Date(2025, 11, 12),
-    potenciaKwp: 3.3,
-    valorTotal: 8900.0,
-    cidadeUf: "Olinda/PE",
-  },
-  {
-    id: "4",
-    nomeCliente: "Ana Carolina Mendes",
-    dataProposta: new Date(2025, 11, 10),
-    potenciaKwp: 10.2,
-    valorTotal: 32500.0,
-    cidadeUf: "Paulista/PE",
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Proposal } from "@shared/schema";
 
 export default function ProposalList() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
-  
-  // todo: remove mock functionality
-  const [proposals] = useState<Proposal[]>(mockProposals);
+
+  const { data: proposals = [], isLoading } = useQuery<Proposal[]>({
+    queryKey: ["/api/proposals"],
+  });
 
   const filteredProposals = proposals.filter((proposal) =>
     proposal.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -81,13 +40,42 @@ export default function ProposalList() {
   };
 
   const handleDownload = (proposal: Proposal) => {
-    // todo: remove mock functionality
-    console.log("Downloading PDF for:", proposal.nomeCliente);
     toast({
       title: "Download iniciado",
       description: `Baixando proposta de ${proposal.nomeCliente}`,
     });
+    window.open(`/api/proposals/${proposal.id}/pdf`, "_blank");
   };
+
+  const formatDateString = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  };
+
+  const formatDateStringShort = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return format(date, "dd/MM/yy", { locale: ptBR });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <Skeleton className="h-10 w-full mb-6" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
@@ -156,7 +144,7 @@ export default function ProposalList() {
                 </TableHeader>
                 <TableBody>
                   {filteredProposals.map((proposal) => (
-                    <TableRow key={proposal.id} className="hover-elevate" data-testid={`row-proposal-${proposal.id}`}>
+                    <TableRow key={proposal.id} data-testid={`row-proposal-${proposal.id}`}>
                       <TableCell className="font-medium" data-testid={`text-cliente-${proposal.id}`}>
                         {proposal.nomeCliente}
                       </TableCell>
@@ -164,13 +152,13 @@ export default function ProposalList() {
                         {proposal.cidadeUf || "-"}
                       </TableCell>
                       <TableCell>
-                        {format(proposal.dataProposta, "dd/MM/yyyy", { locale: ptBR })}
+                        {formatDateString(proposal.dataProposta)}
                       </TableCell>
                       <TableCell className="text-right">
                         {proposal.potenciaKwp.toFixed(2)} kWp
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(proposal.valorTotal)}
+                        {formatCurrency(proposal.valorTotalAvista)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -203,7 +191,7 @@ export default function ProposalList() {
                       </p>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {format(proposal.dataProposta, "dd/MM/yy", { locale: ptBR })}
+                      {formatDateStringShort(proposal.dataProposta)}
                     </span>
                   </div>
                   
@@ -213,7 +201,7 @@ export default function ProposalList() {
                         {proposal.potenciaKwp.toFixed(2)} kWp
                       </span>
                       <span className="font-medium">
-                        {formatCurrency(proposal.valorTotal)}
+                        {formatCurrency(proposal.valorTotalAvista)}
                       </span>
                     </div>
                   </div>
