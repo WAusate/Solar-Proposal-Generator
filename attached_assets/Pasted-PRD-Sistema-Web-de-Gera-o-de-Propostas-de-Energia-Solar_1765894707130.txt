@@ -1,0 +1,181 @@
+PRD – Sistema Web de Geração de Propostas de Energia Solar
+1. Visão Geral
+Sistema web simples para gerar propostas comerciais de energia solar em PDF , acessível via navegador, sem login, voltado para uso próprio do integrador.
+
+O sistema não precisa calcular payback, VPL, TIR nem simular consumo x geração.
+O usuário informará manualmente os principais dados técnicos e financeiros, e o sistema apenas montará uma proposta em um modelo padronizado.
+
+2. Objetivos do Produto
+Padronizar e agilizar a emissão de propostas comerciais.
+Evite erros de digitação e formatação manual (Word/Canva).
+Permitir acesso de qualquer lugar via navegador.
+Manter um histórico simples de propostas geradas (opcional, mas casual).
+3. Escopo (MVP)
+Em termos gerais, não há MVP:
+
+Tela para criar nova proposta com formulário.
+Geração automática de documento de proposta em PDF .
+Armazenamento simples das propostas (para rebaixar PDFs depois).
+Textos institucionais fixos gravados no sistema.
+Campos configuráveis ​​(preenchidos pelo usuário) para dados técnicos, equipamentos, garantias e valor.
+Fora do (MVP):
+
+Login/controle de usuários.
+Cálculo orgânico de:
+Potência do sistema
+Geração mensal
+Payback, VPL, TIR, fluxo de caixa
+Gráficos (consumo x geração, gráficos financeiros).
+Integração com ERPs, CRMs ou bancos.
+Envio automático por e-mail/WhatsApp (pode ser considerado depois).
+4. Usuário-Alva
+Perfil: Integrador de energia solar (pessoa física ou pequena empresa).
+Características:
+Não é programador.
+Usa o sistema sozinho (um único usuário).
+Precisa gerar propostas rápidas e visualmente organizadas.
+5. Fluxos principais
+5.1. Fluxo “Criar Nova Proposta”
+O usuário acessa a URL do sistema pelo navegador.
+Clique em “Nova Proposta” (ou já cai direto no formulário).
+Preenche os campos do formulário (dados do cliente, técnicos, equipamentos, garantias, valor).
+Clique em “Gerar Proposta (PDF)”.
+Sistema:
+Valida campos obrigatórios.
+Monte o documento de proposta com:
+Fixos fixos.
+Dados fornecidos pelo usuário.
+Gere o PDF.
+O usuário faz download do PDF e envia ao cliente por e-mail/WhatsApp fora do sistema.
+5.2. Fluxo “Lista Propostas” (opcional opcional)
+O usuário acesse a tela “Propostas”.
+Vê uma lista com:
+Nome do cliente
+Data da proposta
+Potência (kWp)
+Pode:
+Baixe novamente o PDF de cada proposta.
+(Opcional) Filtrar por nome ou dados.
+6. Requisitos Funcionais
+6.1. Tela “Nova Proposta”
+Campos:
+
+Dados do Cliente / Proposta
+nome_cliente(texto, obrigatório)
+cidade_uf(texto, não)
+data_proposta(dados, obrigatórios, preenchidos automaticamente com dados atuais, permitindo edição)
+validade_dias(número inteiro, obrigatório, valor padrão ex.: 4 dias)
+Dados Técnicos do Sistema
+potencia_proposta_kwp(número decimal, obrigatório)
+Exibição no PDF: “4,27 kWp – Potência Proposta”
+geracao_estimada_kwh_mes(número decimal, obrigatório)
+Exibição: “532 kWh/mês – Geração Estimada”
+area_util_m2(número decimal, opcional)
+Exposição: “17 m² – Área Útil”
+Equipamentos Principais
+(fotovoltaicos)
+modelo_modulo(texto, obrigatório)
+quantidade_modulo(inteiro, obrigatório)
+Inversor(es)
+modelo_inversor(texto, obrigatório)
+quantidade_inversor(inteiro, obrigatório)
+(Opcional – campo extra livre)
+outros_itens(texto multilinha, não)
+Sem PDF, manifesto em:
+ITEM	MODELO	QUANTIDADE
+(fotovoltaicos)	{modelo_modulo}	{qtd}
+Inversor(es)	{modelo_inversor}	{qtd}
+(Opcional) Outros itens	{texto livre ou itens adicionais se implementados}	
+Garantias Incluídas
+(Parte variável; textos editáveis ​​a cada proposta)
+garantia_servicos(texto curto, ex.: “Instalação – 1 ano”)
+garantia_modulos_equipamento(texto curto, ex.: “Equipamento – 15 anos”)
+garantia_modulos_performance(texto curto, ex.: “Performance – 25 anos”)
+garantia_inversor(texto curto, ex.: “Inversor – 10 anos”)
+Exemplo de Defence no PDF:
+NOSSOS SERVIÇOS	MÓDULOS FOTOVOLTAICOS	INVESTIDORES
+{garantia_servicos}	EQUIPAMENTO: {garantia_modulos_equipamento}	{garantia_inversor}
+DESEMPENHO: {garantia_modulos_performance}	
+Observação padrão no PDF (texto corrigido):
+“A garantia dos equipamentos é de responsabilidade dos fabricantes.”
+Informações Financeiras
+valor_total_avista(número decimal, obrigatório)
+Ex.: “R$ 11.537,92”
+Exibição no PDF, na seção “Condições Comerciais / Formas de Pagamento”:
+Bloco simples com:
+Título: “À vista”
+Valentia:R$ {valor_total_avista}
+E título de local:
+INVESTIMENTO	
+À vista	R$ {valor}
+6.2. Textos Fixos do Documento (codificado no MVP)
+Os seguintes blocos devem ser fixos , mas organizados no layout do PDF:
+
+Cabeçalho / Título
+Título: “Proposta Comercial”
+Nome da empresa (fixo) – a ser definido.
+Logotipo (se o agente tiver suporte para upload de imagem ou URL).
+Nossa experiência e compromisso
+Texto fixo, baseado no exemplo do PDF:
+Ex.: “Somos uma empresa especializada no desenvolvimento de soluções de energia fotovoltaica…”
+(Pode usar o texto atual da proposta enviada como base.)
+Seção “Energia Fotovoltaica – Como funciona?” (opcional, mas pode manter)
+Explicação textual simples (fixa) como no modelo enviado.
+Ilustração é opcional; não é requisito funcional (apenas se for fácil reaproveitar imagens).
+Nosso Diferencial / Soluções Financeiras
+Texto sobre:
+Parcerias com bancos.
+Possibilidade de análise de táxons reais.
+Essa seção é estática; não precisa de cálculo ou integração bancária.
+Cronômetro
+Bloco de negócios com as etapas:
+A da proposta.
+Validação do projeto pelo setor técnico.
+D (assinatura de contrato e pagamento).
+D+30 dias: encomenda dos equipamentos e preparação da infraestrutura.
+D+60 dias: montagem do sistema.
+D+90 dias: testes e homologação na distribuidora.
+Rodapé / Contatos
+Campos fixos configuráveis ​​em código (sem MVP):
+Nome do responsável comercial.
+Telefone.
+Endereço.
+Dados locais e:
+O local pode ser fixo (ex.: “Jaboatão dos Guararapes”) ou um campo opcional.
+Data pode ser data_proposta.
+6.3. Tela “Lista de Propostas” (se rompeu)
+Tabela com colunas:
+Nome do cliente
+Data da proposta
+Potência (kWp)
+Ação “Baixar PDF”
+Ordem: mais recentes no topo.
+Os dados podem ficar salvos em banco de dados simples (ex.: SQLite, Postgres, etc.).
+7. Requisitos Não Funcionais
+Acesso via navegador (desktop e mobile, se possível responsivo).
+Sem login no MVP (qualquer pessoa com o link pode acessar).
+O PDF gerado deve ser:
+Em A4.
+Em português (acentos corretos).
+Com formatação limpa e profissional.
+Desempenho:
+Geração do PDF em poucos segundos após clicar em “Gerar Proposta”.
+8. Regras e Comportamentos
+data_proposta:
+Preenchido automaticamente com os dados atuais ao abrir a tela.
+O usuário pode alterar se quiser.
+validade_dias:
+Padrão 4 dias, mas o usuário pode alterar.
+No PDF, exibir algo como:
+“Esta proposta é válida em todos os seus termos por {validade_dias} dias corridos contados a partir dos dados de envio.”
+Nenhum cálculo complexo financeiro é necessário:
+O sistema não calcula tarifas, economia, payback, VPL, TIR.
+Seções de análise financeira detalhada do modelo original não entram no MVP .
+Não é necessário gráficos de consumo x geração.
+9. Futuras Evoluções Possíveis (fora do MVP, apenas referência)
+Login com usuários e senhas.
+Cadastro de catálogo de equipamentos (banco de dados de módulos e inversores).
+Cálculo automático de geração com base em kWp e cidade.
+Cálculo de payback, VPL, TIR e fluxo de caixa.
+Geração de gráficos (consumo x geração, comparativos).
+Envio de proposta por e-mail diretamente do sistema.
