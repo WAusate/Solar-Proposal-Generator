@@ -1,8 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Sun, FileText, Plus } from "lucide-react";
+import { Sun, FileText, Plus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function Header() {
+interface HeaderProps {
+  onLogout?: () => void;
+}
+
+export default function Header({ onLogout }: HeaderProps) {
   const [location] = useLocation();
 
   return (
@@ -36,6 +40,16 @@ export default function Header() {
               <span className="hidden sm:inline">Nova Proposta</span>
             </Button>
           </Link>
+          {onLogout && (
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={onLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
         </nav>
       </div>
     </header>
