@@ -7,7 +7,6 @@ const COMPANY_PHONE = "(81) 99999-9999";
 const COMPANY_EMAIL = "contato@solarpro.com.br";
 const RESPONSIBLE_NAME = "Consultor Comercial";
 
-// Use aqui a paleta que você já ajustou
 const COLORS = {
   primary: "#32B350",
   secondary: "#7AD66F",
@@ -115,40 +114,62 @@ function drawInfoCard(
   return y + cardHeight + 15;
 }
 
+function drawFooter(
+  doc: PDFKit.PDFDocument,
+  pageNumber: number,
+  totalPages: number,
+  pageWidth: number,
+  contentWidth: number,
+  leftMargin: number
+) {
+  const footerY = doc.page.height - 35;
+
+  doc.rect(0, footerY - 5, pageWidth, 40).fill(COLORS.dark);
+
+  doc
+    .fontSize(8)
+    .font("Helvetica")
+    .fillColor(COLORS.white)
+    .text(`${COMPANY_NAME} | ${COMPANY_ADDRESS}`, leftMargin, footerY + 5, {
+      width: contentWidth - 60,
+      align: "left",
+    });
+
+  doc
+    .fontSize(8)
+    .font("Helvetica")
+    .fillColor(COLORS.white)
+    .text(`${pageNumber} / ${totalPages}`, pageWidth - 80, footerY + 5, {
+      width: 30,
+      align: "right",
+    });
+}
+
 export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: 0, bottom: 40, left: 50, right: 50 },
-    bufferPages: true,
   });
 
   const pageWidth = doc.page.width;
   const contentWidth = pageWidth - 100;
   const leftMargin = 50;
 
-  // ============ PAGE 1: COVER ESTILO "KÁTIA" ============
+  // ============ PAGE 1: COVER ============
 
-  // fundo branco total
   doc.rect(0, 0, pageWidth, doc.page.height).fill(COLORS.white);
 
-  // CAPA PRONTA VINDO DO COREL
   const coverImagePath = "./server/assets/capa-corel.png";
 
-  // desenha a capa ocupando a página inteira
+  // Remove o height para evitar forçar quebra de página
   doc.image(coverImagePath, 0, 0, {
     width: pageWidth,
-    height: doc.page.height,
   });
 
-  // ===== TEXTOS DINÂMICOS SOBRE A CAPA =====
-  // Ajuste as coordenadas (x, y) abaixo conforme o espaço que você deixou no Corel
-
-  // Margens de texto
   const leftMarginCover = 25;
   const textWidthCover = pageWidth - leftMarginCover - 60;
 
-  // Título "PROPOSTA COMERCIAL" – parte branca central/superior
-  let currentY = 520; // ajuste fino conforme seu layout
+  let currentY = 520;
 
   doc
     .font("Helvetica-Bold")
@@ -170,8 +191,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY += 55;
 
-  // Cards simples de CLIENTE e DATA/VALIDADE sobre a área branca
-
   const cardsY = currentY;
   const cardHeight = 90;
   const gapBetweenCards = 24;
@@ -179,7 +198,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const totalCardsWidth = pageWidth - leftMarginCover - 60;
   const singleCardWidth = (totalCardsWidth - gapBetweenCards) / 2;
 
-  // CARD 1 – CLIENTE
   drawRoundedRect(
     doc,
     leftMarginCover,
@@ -209,7 +227,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       width: singleCardWidth - 36,
     });
 
-  // depois de escrever o nome, use a posição atual do cursor + um espaçamento
   infoY = doc.y + 6;
 
   if (proposal.cidadeUf) {
@@ -220,7 +237,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .text(proposal.cidadeUf, infoX, infoY);
   }
 
-  // CARD 2 – DATA / VALIDADE
   const secondCardX = leftMarginCover + singleCardWidth + gapBetweenCards;
 
   drawRoundedRect(
@@ -236,7 +252,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   infoX = secondCardX + 18;
   infoY = cardsY + 16;
 
-  // DATA
   doc
     .fontSize(9)
     .font("Helvetica-Bold")
@@ -255,7 +270,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   infoY += 24;
 
-  // VALIDADE
   doc
     .fontSize(9)
     .font("Helvetica-Bold")
@@ -270,7 +284,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fillColor(COLORS.dark)
     .text(`${proposal.validadeDias} dias`, infoX, infoY);
 
-  // LOGO DA EMPRESA (no canto inferior direito da capa)
   const logoPath = "./server/assets/Logo Átomo Solar.png";
   const logoWidth = 120;
   const bottomLogoY = 120;
@@ -278,6 +291,8 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   doc.image(logoPath, pageWidth - logoWidth - 50, doc.page.height - bottomLogoY, {
     width: logoWidth,
   });
+
+  drawFooter(doc, 1, 3, pageWidth, contentWidth, leftMargin);
 
   // ============ PAGE 2: TECHNICAL SPECS ============
 
@@ -355,7 +370,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const colQtyWidth = 60;
   const rowHeight = 26;
 
-  // CABEÇALHO
   drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 6, COLORS.background);
 
   doc
@@ -375,7 +389,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY += rowHeight + 4;
 
-  // ==== LINHA 1 – MÓDULOS FOTOVOLTAICOS ====
   drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 4, COLORS.white);
 
   doc
@@ -405,7 +418,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY += rowHeight + 2;
 
-  // ==== LINHA 2 – INVERSOR(ES) ====
   drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 4, COLORS.background);
 
   doc
@@ -435,7 +447,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY += rowHeight + 20;
 
-  // ==== SEÇÃO DE GARANTIAS ====
   currentY = drawSectionHeader(
     doc,
     "GARANTIAS INCLUÍDAS",
@@ -445,7 +456,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   const warrantyWidth = (contentWidth - 20) / 3;
 
-  // ===== CARD 1 – SERVIÇOS =====
   drawRoundedRect(doc, leftMargin, currentY, warrantyWidth, 80, 8, COLORS.background);
 
   doc
@@ -464,7 +474,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       width: warrantyWidth - 24,
     });
 
-  // ===== CARD 2 – MÓDULOS FOTOVOLTAICOS =====
   const modsX = leftMargin + warrantyWidth + 10;
 
   drawRoundedRect(doc, modsX, currentY, warrantyWidth, 80, 8, COLORS.background);
@@ -493,7 +502,6 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       width: warrantyWidth - 24,
     });
 
-  // ===== CARD 3 – INVERSORES =====
   const invX = leftMargin + (warrantyWidth + 10) * 2;
 
   drawRoundedRect(doc, invX, currentY, warrantyWidth, 80, 8, COLORS.background);
@@ -588,6 +596,8 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
     doc.restore();
   });
+
+  drawFooter(doc, 2, 3, pageWidth, contentWidth, leftMargin);
 
   // ============ PAGE 3: INVESTMENT ============
 
@@ -758,34 +768,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       align: "center",
     });
 
-  // ============ FOOTER EM TODAS AS PÁGINAS ============
-
-  const pages = doc.bufferedPageRange();
-  for (let i = 0; i < pages.count; i++) {
-    doc.switchToPage(i);
-
-    const footerY = doc.page.height - 35;
-
-    doc.rect(0, footerY - 5, pageWidth, 40).fill(COLORS.dark);
-
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(COLORS.white)
-      .text(`${COMPANY_NAME} | ${COMPANY_ADDRESS}`, leftMargin, footerY + 5, {
-        width: contentWidth - 60,
-        align: "left",
-      });
-
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(COLORS.white)
-      .text(`${i + 1} / ${pages.count}`, pageWidth - 80, footerY + 5, {
-        width: 30,
-        align: "right",
-      });
-  }
+  drawFooter(doc, 3, 3, pageWidth, contentWidth, leftMargin);
 
   return doc;
 }
