@@ -7,17 +7,18 @@ const COMPANY_PHONE = "(81) 99999-9999";
 const COMPANY_EMAIL = "contato@solarpro.com.br";
 const RESPONSIBLE_NAME = "Consultor Comercial";
 
+// Use aqui a paleta que você já ajustou
 const COLORS = {
-  primary: "#33A851",
-  secondary: "#6CCF7F",
-  accent: "#FF9E32",
-  dark: "#1E5130",
-  text: "#2F3B3A",
-  textLight: "#6C7A75",
-  background: "#F3FBF5",
+  primary: "#32B350",
+  secondary: "#7AD66F",
+  accent: "#FFA33A",
+  dark: "#1D4B2A",
+  text: "#24372E",
+  textLight: "#6F8175",
+  background: "#F4FBF4",
   white: "#ffffff",
   success: "#2ECC71",
-  warning: "#F6A623",
+  warning: "#FFC857",
 };
 
 function formatCurrency(value: number): string {
@@ -125,152 +126,164 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const contentWidth = pageWidth - 100;
   const leftMargin = 50;
 
-  // ============ PAGE 1: COVER ============
+  // ============ PAGE 1: COVER ESTILO "KÁTIA" ============
 
-  doc.rect(0, 0, pageWidth, 280).fill(COLORS.primary);
+  // fundo branco total
+  doc.rect(0, 0, pageWidth, doc.page.height).fill(COLORS.white);
 
-  doc.rect(0, 260, pageWidth, 40).fill(COLORS.secondary);
+  // CAPA PRONTA VINDO DO COREL
+  const coverImagePath = "./server/assets/capa-corel.png";
+
+  // desenha a capa ocupando a página inteira
+  doc.image(coverImagePath, 0, 0, {
+    width: pageWidth,
+    height: doc.page.height,
+  });
+
+  // ===== TEXTOS DINÂMICOS SOBRE A CAPA =====
+  // Ajuste as coordenadas (x, y) abaixo conforme o espaço que você deixou no Corel
+
+  // Margens de texto
+  const leftMarginCover = 25;
+  const textWidthCover = pageWidth - leftMarginCover - 60;
+
+  // Título "PROPOSTA COMERCIAL" – parte branca central/superior
+  let currentY = 520; // ajuste fino conforme seu layout
 
   doc
-    .fontSize(12)
-    .font("Helvetica")
-    .fillColor(COLORS.white)
-    .text(COMPANY_NAME.toUpperCase(), leftMargin, 50);
-
-  doc
-    .fontSize(42)
     .font("Helvetica-Bold")
-    .fillColor(COLORS.white)
-    .text("PROPOSTA", leftMargin, 120);
+    .fontSize(30)
+    .fillColor(COLORS.dark)
+    .text("PROPOSTA", leftMarginCover, currentY, {
+      width: textWidthCover,
+    });
+
+  currentY += 30;
 
   doc
-    .fontSize(42)
     .font("Helvetica-Bold")
-    .fillColor(COLORS.accent)
-    .text("COMERCIAL", leftMargin, 165);
+    .fontSize(30)
+    .fillColor(COLORS.primary)
+    .text("COMERCIAL", leftMarginCover, currentY, {
+      width: textWidthCover,
+    });
+
+  currentY += 55;
+
+  // Cards simples de CLIENTE e DATA/VALIDADE sobre a área branca
+
+  const cardsY = currentY;
+  const cardHeight = 90;
+  const gapBetweenCards = 24;
+
+  const totalCardsWidth = pageWidth - leftMarginCover - 60;
+  const singleCardWidth = (totalCardsWidth - gapBetweenCards) / 2;
+
+  // CARD 1 – CLIENTE
+  drawRoundedRect(
+    doc,
+    leftMarginCover,
+    cardsY,
+    singleCardWidth,
+    cardHeight,
+    14,
+    COLORS.background
+  );
+
+  let infoX = leftMarginCover + 18;
+  let infoY = cardsY + 16;
 
   doc
-    .fontSize(14)
-    .font("Helvetica")
-    .fillColor(COLORS.white)
-    .text("Sistema Fotovoltaico", leftMargin, 230);
-
-  let currentY = 320;
-
-  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 100, 10, COLORS.background);
-
-  doc
-    .fontSize(11)
-    .font("Helvetica")
+    .fontSize(9)
+    .font("Helvetica-Bold")
     .fillColor(COLORS.textLight)
-    .text("CLIENTE", leftMargin + 20, currentY + 20);
+    .text("CLIENTE", infoX, infoY);
+
+  infoY += 14;
 
   doc
-    .fontSize(22)
+    .fontSize(16)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.nomeCliente, leftMargin + 20, currentY + 38);
+    .text(proposal.nomeCliente, infoX, infoY, {
+      width: singleCardWidth - 36,
+    });
+
+  // depois de escrever o nome, use a posição atual do cursor + um espaçamento
+  infoY = doc.y + 6;
 
   if (proposal.cidadeUf) {
     doc
-      .fontSize(11)
+      .fontSize(10)
       .font("Helvetica")
       .fillColor(COLORS.textLight)
-      .text(proposal.cidadeUf, leftMargin + 20, currentY + 68);
+      .text(proposal.cidadeUf, infoX, infoY);
   }
 
-  const dateBoxX = pageWidth - 200;
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .fillColor(COLORS.textLight)
-    .text("DATA", dateBoxX, currentY + 20);
+  // CARD 2 – DATA / VALIDADE
+  const secondCardX = leftMarginCover + singleCardWidth + gapBetweenCards;
 
+  drawRoundedRect(
+    doc,
+    secondCardX,
+    cardsY,
+    singleCardWidth,
+    cardHeight,
+    14,
+    COLORS.background
+  );
+
+  infoX = secondCardX + 18;
+  infoY = cardsY + 16;
+
+  // DATA
   doc
-    .fontSize(12)
+    .fontSize(9)
     .font("Helvetica-Bold")
-    .fillColor(COLORS.dark)
-    .text(formatDate(proposal.dataProposta), dateBoxX, currentY + 38);
-
-  doc
-    .fontSize(10)
-    .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("VALIDADE", dateBoxX, currentY + 60);
+    .text("DATA", infoX, infoY);
 
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.dark)
-    .text(`${proposal.validadeDias} dias`, dateBoxX, currentY + 78);
-
-  currentY += 130;
-
-  currentY = drawSectionHeader(doc, "NOSSA MISSAO E COMPROMISSO", currentY, contentWidth);
+  infoY += 14;
 
   doc
     .fontSize(11)
-    .font("Helvetica")
-    .fillColor(COLORS.text)
-    .text(
-      "Somos uma empresa especializada no desenvolvimento de solucoes de energia fotovoltaica para residencias, empresas, industrias e agronegocios.",
-      leftMargin,
-      currentY,
-      { width: contentWidth, align: "justify", lineGap: 4 }
-    );
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(formatDate(proposal.dataProposta), infoX, infoY, {
+      width: singleCardWidth - 36,
+    });
 
-  currentY = doc.y + 12;
+  infoY += 24;
 
-  doc.text(
-    "Nosso compromisso e garantir a producao de energia e performance do seu sistema, oferecendo solucoes exclusivas de financiamento para viabilizar a implementacao do seu sistema fotovoltaico.",
-    leftMargin,
-    currentY,
-    { width: contentWidth, align: "justify", lineGap: 4 }
-  );
+  // VALIDADE
+  doc
+    .fontSize(9)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.textLight)
+    .text("VALIDADE", infoX, infoY);
 
-  currentY = doc.y + 30;
+  infoY += 14;
 
-  currentY = drawSectionHeader(doc, "COMO FUNCIONA A ENERGIA SOLAR", currentY, contentWidth);
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text(`${proposal.validadeDias} dias`, infoX, infoY);
 
-  const steps = [
-    { title: "Paineis Solares", desc: "Os paineis captam a energia do Sol e a transformam em energia eletrica." },
-    { title: "Inversor", desc: "Converte a energia gerada em formato identico ao fornecido pela distribuidora." },
-    { title: "Quadro de Distribuicao", desc: "A energia e conectada para uso em qualquer equipamento." },
-    { title: "Medidor Bidirecional", desc: "Mede o consumo e a energia injetada na rede." },
-    { title: "Rede de Distribuicao", desc: "Absorve excedentes e fornece energia quando necessario." },
-  ];
+  // LOGO DA EMPRESA (no canto inferior direito da capa)
+  const logoPath = "./server/assets/Logo Átomo Solar.png";
+  const logoWidth = 120;
+  const bottomLogoY = 120;
 
-  steps.forEach((step, index) => {
-    const stepY = currentY + index * 32;
-
-    doc
-      .save()
-      .circle(leftMargin + 10, stepY + 8, 10)
-      .fill(COLORS.secondary);
-
-    doc
-      .fontSize(10)
-      .font("Helvetica-Bold")
-      .fillColor(COLORS.white)
-      .text((index + 1).toString(), leftMargin + 6, stepY + 4);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .fillColor(COLORS.dark)
-      .text(step.title, leftMargin + 30, stepY);
-
-    doc
-      .fontSize(10)
-      .font("Helvetica")
-      .fillColor(COLORS.textLight)
-      .text(step.desc, leftMargin + 30, stepY + 14, { width: contentWidth - 40 });
-
-    doc.restore();
+  doc.image(logoPath, pageWidth - logoWidth - 50, doc.page.height - bottomLogoY, {
+    width: logoWidth,
   });
 
   // ============ PAGE 2: TECHNICAL SPECS ============
+
   doc.addPage();
+
+  currentY = 0;
 
   doc.rect(0, 0, pageWidth, 60).fill(COLORS.primary);
 
@@ -287,7 +300,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .font("Helvetica")
     .fillColor(COLORS.text)
     .text(
-      "O sistema foi dimensionado baseando-se na analise das imagens por satelite e em seu consumo energetico mensal, adotando-se como premissa que a area disponivel e adequada para a instalacao.",
+      "O sistema foi dimensionado baseando-se na análise das imagens por satélite e em seu consumo energético mensal, adotando-se como premissa que a área disponível é adequada para a instalação.",
       leftMargin,
       currentY,
       { width: contentWidth, align: "justify", lineGap: 4 }
@@ -302,7 +315,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     leftMargin,
     currentY,
     cardWidth,
-    "Potencia Proposta",
+    "Potência Proposta",
     `${proposal.potenciaKwp.toFixed(2)} kWp`,
     "Capacidade do sistema"
   );
@@ -312,9 +325,9 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     leftMargin + cardWidth + 10,
     currentY,
     cardWidth,
-    "Geracao Estimada",
+    "Geração Estimada",
     `${proposal.geracaoEstimadaKwh.toFixed(0)} kWh`,
-    "Por mes"
+    "Por mês"
   );
 
   drawInfoCard(
@@ -322,116 +335,184 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     leftMargin + (cardWidth + 10) * 2,
     currentY,
     cardWidth,
-    "Area Util",
-    `${proposal.areaUtilM2?.toFixed(0) || "—"} m2`,
-    "Espaco necessario"
+    "Área Útil",
+    `${proposal.areaUtilM2?.toFixed(0) || "—"} m²`,
+    "Espaço necessário"
   );
 
   currentY += 100;
 
-  currentY = drawSectionHeader(doc, "EQUIPAMENTOS PRINCIPAIS", currentY, contentWidth);
+  currentY = drawSectionHeader(
+    doc,
+    "EQUIPAMENTOS PRINCIPAIS",
+    currentY,
+    contentWidth
+  );
 
-  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 30, 5, COLORS.primary);
+  const tableX = leftMargin;
+  const colItemWidth = 180;
+  const colModelWidth = contentWidth - colItemWidth - 80;
+  const colQtyWidth = 60;
+  const rowHeight = 26;
+
+  // CABEÇALHO
+  drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 6, COLORS.background);
 
   doc
-    .fontSize(10)
+    .fontSize(9)
     .font("Helvetica-Bold")
-    .fillColor(COLORS.white)
-    .text("ITEM", leftMargin + 15, currentY + 10)
-    .text("MODELO", leftMargin + 140, currentY + 10)
-    .text("QTD", leftMargin + contentWidth - 50, currentY + 10);
+    .fillColor(COLORS.textLight)
+    .text("ITEM", tableX + 12, currentY + 8, { width: colItemWidth - 24 });
 
-  currentY += 35;
+  doc.text("MODELO", tableX + colItemWidth + 12, currentY + 8, {
+    width: colModelWidth - 24,
+  });
 
-  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 35, 3, COLORS.background);
+  doc.text("QTD", tableX + colItemWidth + colModelWidth + 12, currentY + 8, {
+    width: colQtyWidth - 24,
+    align: "right",
+  });
+
+  currentY += rowHeight + 4;
+
+  // ==== LINHA 1 – MÓDULOS FOTOVOLTAICOS ====
+  drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 4, COLORS.white);
 
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text("Modulos Fotovoltaicos", leftMargin + 15, currentY + 12);
+    .text("Módulos Fotovoltaicos", tableX + 12, currentY + 8, {
+      width: colItemWidth - 24,
+    });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.text)
-    .text(proposal.modeloModulo, leftMargin + 140, currentY + 12, { width: 280 });
-
-  doc
-    .fontSize(11)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.secondary)
-    .text(proposal.quantidadeModulo.toString(), leftMargin + contentWidth - 50, currentY + 12);
-
-  currentY += 40;
-
-  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 35, 3, COLORS.white);
+    .text(proposal.modeloModulo, tableX + colItemWidth + 12, currentY + 8, {
+      width: colModelWidth - 24,
+    });
 
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text("Inversor(es)", leftMargin + 15, currentY + 12);
+    .text(proposal.quantidadeModulo.toString(), tableX + colItemWidth + colModelWidth, currentY + 8, {
+      width: colQtyWidth - 12,
+      align: "right",
+    });
+
+  currentY += rowHeight + 2;
+
+  // ==== LINHA 2 – INVERSOR(ES) ====
+  drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 4, COLORS.background);
+
+  doc
+    .fontSize(10)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.dark)
+    .text("Inversor(es)", tableX + 12, currentY + 8, {
+      width: colItemWidth - 24,
+    });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.text)
-    .text(proposal.modeloInversor, leftMargin + 140, currentY + 12, { width: 280 });
+    .text(proposal.modeloInversor, tableX + colItemWidth + 12, currentY + 8, {
+      width: colModelWidth - 24,
+    });
 
   doc
-    .fontSize(11)
+    .fontSize(10)
     .font("Helvetica-Bold")
-    .fillColor(COLORS.secondary)
-    .text(proposal.quantidadeInversor.toString(), leftMargin + contentWidth - 50, currentY + 12);
+    .fillColor(COLORS.dark)
+    .text(proposal.quantidadeInversor.toString(), tableX + colItemWidth + colModelWidth, currentY + 8, {
+      width: colQtyWidth - 12,
+      align: "right",
+    });
 
-  currentY += 55;
+  currentY += rowHeight + 20;
 
-  currentY = drawSectionHeader(doc, "GARANTIAS INCLUIDAS", currentY, contentWidth);
+  // ==== SEÇÃO DE GARANTIAS ====
+  currentY = drawSectionHeader(
+    doc,
+    "GARANTIAS INCLUÍDAS",
+    currentY,
+    contentWidth
+  );
 
   const warrantyWidth = (contentWidth - 20) / 3;
 
+  // ===== CARD 1 – SERVIÇOS =====
   drawRoundedRect(doc, leftMargin, currentY, warrantyWidth, 80, 8, COLORS.background);
-  doc
-    .fontSize(9)
-    .font("Helvetica")
-    .fillColor(COLORS.textLight)
-    .text("NOSSOS SERVICOS", leftMargin + 12, currentY + 12, { width: warrantyWidth - 24 });
-  doc
-    .fontSize(11)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.dark)
-    .text("Instalacao", leftMargin + 12, currentY + 30);
-  doc
-    .fontSize(16)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.secondary)
-    .text(proposal.garantiaServicos, leftMargin + 12, currentY + 50);
 
-  drawRoundedRect(doc, leftMargin + warrantyWidth + 10, currentY, warrantyWidth, 80, 8, COLORS.background);
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("MODULOS FOTOVOLTAICOS", leftMargin + warrantyWidth + 22, currentY + 12, { width: warrantyWidth - 24 });
+    .text("SERVIÇOS", leftMargin + 12, currentY + 12, {
+      width: warrantyWidth - 24,
+    });
+
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.dark)
-    .text(`Equipamento: ${proposal.garantiaModulosEquipamento}`, leftMargin + warrantyWidth + 22, currentY + 35);
-  doc.text(`Desempenho: ${proposal.garantiaModulosPerformance}`, leftMargin + warrantyWidth + 22, currentY + 55);
+    .text(proposal.garantiaServicos, leftMargin + 12, currentY + 32, {
+      width: warrantyWidth - 24,
+    });
 
-  drawRoundedRect(doc, leftMargin + (warrantyWidth + 10) * 2, currentY, warrantyWidth, 80, 8, COLORS.background);
+  // ===== CARD 2 – MÓDULOS FOTOVOLTAICOS =====
+  const modsX = leftMargin + warrantyWidth + 10;
+
+  drawRoundedRect(doc, modsX, currentY, warrantyWidth, 80, 8, COLORS.background);
+
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("INVERSORES", leftMargin + (warrantyWidth + 10) * 2 + 12, currentY + 12, { width: warrantyWidth - 24 });
+    .text("MÓDULOS FOTOVOLTAICOS", modsX + 12, currentY + 12, {
+      width: warrantyWidth - 24,
+    });
+
   doc
-    .fontSize(16)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.secondary)
-    .text(proposal.garantiaInversor, leftMargin + (warrantyWidth + 10) * 2 + 12, currentY + 45);
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.dark)
+    .text(proposal.garantiaModulosEquipamento, modsX + 12, currentY + 32, {
+      width: warrantyWidth - 24,
+    });
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.dark)
+    .text(proposal.garantiaModulosPerformance, modsX + 12, currentY + 48, {
+      width: warrantyWidth - 24,
+    });
+
+  // ===== CARD 3 – INVERSORES =====
+  const invX = leftMargin + (warrantyWidth + 10) * 2;
+
+  drawRoundedRect(doc, invX, currentY, warrantyWidth, 80, 8, COLORS.background);
+
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text("INVERSORES", invX + 12, currentY + 12, {
+      width: warrantyWidth - 24,
+    });
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(COLORS.dark)
+    .text(proposal.garantiaInversor, invX + 12, currentY + 32, {
+      width: warrantyWidth - 24,
+    });
 
   currentY += 100;
 
@@ -439,21 +520,31 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Obs: A garantia dos equipamentos e de responsabilidade dos fabricantes.", leftMargin, currentY, {
-      width: contentWidth,
-      align: "center",
-    });
+    .text(
+      "A garantia dos equipamentos é de responsabilidade dos fabricantes.",
+      leftMargin,
+      currentY,
+      {
+        width: contentWidth,
+        align: "center",
+      }
+    );
 
   currentY += 35;
 
-  currentY = drawSectionHeader(doc, "CRONOGRAMA DE EXECUCAO", currentY, contentWidth);
+  currentY = drawSectionHeader(
+    doc,
+    "CRONOGRAMA DE EXECUÇÃO",
+    currentY,
+    contentWidth
+  );
 
   const timelineSteps = [
-    { day: "Dia A", title: "Aprovacao", desc: "Proposta Comercial" },
-    { day: "Dia D", title: "Validacao", desc: "Contrato assinado" },
-    { day: "D+30", title: "Preparacao", desc: "Encomenda e infra" },
-    { day: "D+60", title: "Instalacao", desc: "Montagem do sistema" },
-    { day: "D+90", title: "Conclusao", desc: "Testes e homologacao" },
+    { day: "Dia A", title: "Aprovação da Proposta Comercial", desc: "" },
+    { day: "Dia D", title: "Validação Técnica", desc: "Assinatura do contrato" },
+    { day: "D+30", title: "Preparação", desc: "Encomenda e infraestrutura" },
+    { day: "D+60", title: "Instalação", desc: "Montagem do sistema" },
+    { day: "D+90", title: "Conclusão", desc: "Testes e homologação" },
   ];
 
   const stepWidth = contentWidth / 5;
@@ -487,16 +578,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .fillColor(COLORS.dark)
       .text(step.title, stepX, currentY + 40, { width: stepWidth, align: "center" });
 
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(COLORS.textLight)
-      .text(step.desc, stepX, currentY + 55, { width: stepWidth, align: "center" });
+    if (step.desc) {
+      doc
+        .fontSize(8)
+        .font("Helvetica")
+        .fillColor(COLORS.textLight)
+        .text(step.desc, stepX, currentY + 55, { width: stepWidth, align: "center" });
+    }
 
     doc.restore();
   });
 
   // ============ PAGE 3: INVESTMENT ============
+
   doc.addPage();
 
   doc.rect(0, 0, pageWidth, 60).fill(COLORS.primary);
@@ -505,13 +599,13 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(18)
     .font("Helvetica-Bold")
     .fillColor(COLORS.white)
-    .text("INVESTIMENTO E CONDICOES", leftMargin, 22);
+    .text("INVESTIMENTO E CONDIÇÕES", leftMargin, 22);
 
   currentY = 90;
 
   drawRoundedRect(doc, leftMargin, currentY, contentWidth, 120, 12, COLORS.background);
 
-  doc.rect(leftMargin, currentY, 6, 120).fill(COLORS.secondary);
+  doc.rect(leftMargin, currentY, 6, 120).fill(COLORS.accent);
 
   doc
     .fontSize(12)
@@ -529,28 +623,30 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Pagamento a vista", leftMargin + 25, currentY + 92);
+    .text("Pagamento à vista", leftMargin + 25, currentY + 92);
 
   currentY += 150;
 
-  currentY = drawSectionHeader(doc, "O QUE ESTA INCLUSO", currentY, contentWidth);
+  currentY = drawSectionHeader(doc, "O QUE ESTÁ INCLUSO", currentY, contentWidth);
 
   const includedItems = [
     "Todos os equipamentos descritos nesta proposta",
-    "Projeto tecnico completo",
-    "Materiais e estruturas de fixacao",
-    "Mao de obra especializada para instalacao",
-    "Homologacao junto a distribuidora de energia",
-    "Suporte tecnico durante todo o processo",
+    "Materiais e estruturas de fixação",
+    "Mão de obra especializada para instalação",
+    "Homologação junto à distribuidora de energia",
+    "Suporte técnico durante todo o processo",
   ];
 
   includedItems.forEach((item, index) => {
     const itemY = currentY + index * 28;
 
+    doc.save().circle(leftMargin + 8, itemY + 6, 6).fill(COLORS.success);
+
     doc
-      .save()
-      .circle(leftMargin + 8, itemY + 6, 6)
-      .fill(COLORS.success);
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.white)
+      .text("✓", leftMargin + 4, itemY + 2);
 
     doc
       .fontSize(11)
@@ -563,14 +659,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY += includedItems.length * 28 + 30;
 
-  currentY = drawSectionHeader(doc, "SOLUCOES FINANCEIRAS", currentY, contentWidth);
+  currentY = drawSectionHeader(
+    doc,
+    "SOLUÇÕES FINANCEIRAS",
+    currentY,
+    contentWidth
+  );
 
   doc
     .fontSize(11)
     .font("Helvetica")
     .fillColor(COLORS.text)
     .text(
-      "Temos parcerias com diversos bancos como Santander, BV Financeira, Sol Facil, Credisolaris, dentre outros. Faca uma analise da sua taxa real conosco.",
+      "Temos parcerias com diversos bancos como Santander, BV Financeira, Sol Fácil, Credisolaris, dentre outros. Faça uma análise da sua taxa real conosco.",
       leftMargin,
       currentY,
       { width: contentWidth, align: "justify", lineGap: 4 }
@@ -578,7 +679,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   currentY = doc.y + 40;
 
-  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 70, 10, "#FEF3E2");
+  drawRoundedRect(doc, leftMargin, currentY, contentWidth, 70, 10, COLORS.background);
 
   doc.rect(leftMargin, currentY, contentWidth, 4).fill(COLORS.warning);
 
@@ -593,7 +694,9 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .font("Helvetica")
     .fillColor(COLORS.text)
     .text(
-      `Esta proposta e valida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de emissao (${formatDate(proposal.dataProposta)}).`,
+      `Esta proposta é válida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de emissão (${formatDate(
+        proposal.dataProposta
+      )}).`,
       leftMargin + 20,
       currentY + 38,
       { width: contentWidth - 40 }
@@ -616,13 +719,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.nomeCliente, leftMargin, currentY + 58, { width: signatureWidth, align: "center" });
+    .text(proposal.nomeCliente, leftMargin, currentY + 58, {
+      width: signatureWidth,
+      align: "center",
+    });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Cliente", leftMargin, currentY + 74, { width: signatureWidth, align: "center" });
+    .text("Cliente", leftMargin, currentY + 74, {
+      width: signatureWidth,
+      align: "center",
+    });
 
   doc
     .moveTo(leftMargin + signatureWidth + 40, currentY + 50)
@@ -635,15 +744,22 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(RESPONSIBLE_NAME, leftMargin + signatureWidth + 40, currentY + 58, { width: signatureWidth, align: "center" });
+    .text(RESPONSIBLE_NAME, leftMargin + signatureWidth + 40, currentY + 58, {
+      width: signatureWidth,
+      align: "center",
+    });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Responsavel Comercial", leftMargin + signatureWidth + 40, currentY + 74, { width: signatureWidth, align: "center" });
+    .text("Responsável Comercial", leftMargin + signatureWidth + 40, currentY + 74, {
+      width: signatureWidth,
+      align: "center",
+    });
 
-  // ============ FOOTER ON ALL PAGES ============
+  // ============ FOOTER EM TODAS AS PÁGINAS ============
+
   const pages = doc.bufferedPageRange();
   for (let i = 0; i < pages.count; i++) {
     doc.switchToPage(i);
@@ -665,7 +781,10 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .fontSize(8)
       .font("Helvetica")
       .fillColor(COLORS.white)
-      .text(`${i + 1} / ${pages.count}`, pageWidth - 80, footerY + 5, { width: 30, align: "right" });
+      .text(`${i + 1} / ${pages.count}`, pageWidth - 80, footerY + 5, {
+        width: 30,
+        align: "right",
+      });
   }
 
   return doc;
