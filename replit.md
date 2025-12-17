@@ -39,7 +39,29 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Models
 - **Proposals**: Core entity containing client info, system specs (power, modules, inverters), warranty details, and pricing
-- **Users**: Basic user table structure (authentication not implemented in MVP)
+
+### Authentication
+- **Session-based**: Uses express-session with memory store
+- **Single admin user**: Credentials stored in environment variables
+- **Protected routes**: All `/api/proposals/*` routes require authentication
+
+## Authentication Setup
+
+### Credentials Storage
+Login and password are stored as environment variables (Secrets):
+- `ADMIN_USER` - Username for login
+- `ADMIN_PASSWORD` - Password for login  
+- `SESSION_SECRET` - Secret key for session encryption
+
+### How to Change Login/Password
+1. Go to the **Secrets** tab in Replit (lock icon in the sidebar)
+2. Find `ADMIN_USER` and `ADMIN_PASSWORD`
+3. Click to edit and enter new values
+4. Save and restart the application
+
+### Current Credentials
+- Username: `admin`
+- Password: `solar2025`
 
 ## External Dependencies
 
