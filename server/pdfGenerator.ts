@@ -149,6 +149,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: 0, bottom: 40, left: 50, right: 50 },
+    autoFirstPage: true,
   });
 
   const pageWidth = doc.page.width;
@@ -161,12 +162,14 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   const coverImagePath = "./server/assets/capa-corel.png";
 
-  // Limitar a imagem para não ultrapassar a página
+  // Usar fit para garantir que a imagem caiba na página
   doc.image(coverImagePath, 0, 0, {
-    width: pageWidth,
-    height: 500,
-    fit: [pageWidth, 500],
+    fit: [pageWidth, doc.page.height],
   });
+  
+  // Reposicionar o cursor para evitar quebra de página automática
+  doc.x = 0;
+  doc.y = 0;
 
   const leftMarginCover = 25;
   const textWidthCover = pageWidth - leftMarginCover - 60;
@@ -290,9 +293,12 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const logoWidth = 120;
   const bottomLogoY = 120;
 
+  // Usar save/restore para que o logo não afete a posição do cursor
+  doc.save();
   doc.image(logoPath, pageWidth - logoWidth - 50, doc.page.height - bottomLogoY, {
     width: logoWidth,
   });
+  doc.restore();
 
   drawFooter(doc, 1, 3, pageWidth, contentWidth, leftMargin);
 
