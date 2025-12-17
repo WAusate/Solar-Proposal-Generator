@@ -161,9 +161,11 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   const coverImagePath = "./server/assets/capa-corel.png";
 
-  // Remove o height para evitar forçar quebra de página
+  // Limitar a imagem para não ultrapassar a página
   doc.image(coverImagePath, 0, 0, {
     width: pageWidth,
+    height: 500,
+    fit: [pageWidth, 500],
   });
 
   const leftMarginCover = 25;
