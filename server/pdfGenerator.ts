@@ -1,11 +1,11 @@
 import PDFDocument from "pdfkit";
 import { Proposal } from "@shared/schema";
 
-const COMPANY_NAME = "SolarPro Energia";
+const COMPANY_NAME = "Átomo Energia e Soluções Ltda";
 const COMPANY_ADDRESS = "Rua Dois, 25, Sala 101, Maranguape I, Paulista – PE. CEP 53444-380";
-const COMPANY_PHONE = "(81) 99999-9999";
-const COMPANY_EMAIL = "contato@solarpro.com.br";
-const RESPONSIBLE_NAME = "Consultor Comercial";
+const COMPANY_PHONE = "(81) 99750-3041";
+const COMPANY_EMAIL = "contato@atomosolar.com.br";
+const RESPONSIBLE_NAME = "Ataulfo Dávila";
 
 const COLORS = {
   primary: "#32B350",
@@ -70,7 +70,7 @@ function drawSectionHeader(
     .fontSize(14)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(title, leftMargin + 12, y + 5);
+    .text(title, leftMargin + 12, y + 5, { lineBreak: false });
 
   doc.restore();
   return y + 35;
@@ -95,20 +95,20 @@ function drawInfoCard(
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text(title.toUpperCase(), x + 12, y + 16, { width: width - 24 });
+    .text(title.toUpperCase(), x + 12, y + 16, { width: width - 24, lineBreak: false });
 
   doc
     .fontSize(18)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(value, x + 12, y + 32, { width: width - 24 });
+    .text(value, x + 12, y + 32, { width: width - 24, lineBreak: false });
 
   if (subtitle) {
     doc
       .fontSize(9)
       .font("Helvetica")
       .fillColor(COLORS.textLight)
-      .text(subtitle, x + 12, y + 54, { width: width - 24 });
+      .text(subtitle, x + 12, y + 54, { width: width - 24, lineBreak: false });
   }
 
   return y + cardHeight + 15;
@@ -116,40 +116,17 @@ function drawInfoCard(
 
 function drawFooter(
   doc: PDFKit.PDFDocument,
-  pageNumber: number,
-  totalPages: number,
-  pageWidth: number,
-  contentWidth: number,
-  leftMargin: number
+  pageWidth: number
 ) {
   const footerY = doc.page.height - 35;
-
   doc.rect(0, footerY - 5, pageWidth, 40).fill(COLORS.dark);
-
-  doc
-    .fontSize(8)
-    .font("Helvetica")
-    .fillColor(COLORS.white)
-    .text(`${COMPANY_NAME} | ${COMPANY_ADDRESS}`, leftMargin, footerY + 5, {
-      width: contentWidth - 60,
-      align: "left",
-    });
-
-  doc
-    .fontSize(8)
-    .font("Helvetica")
-    .fillColor(COLORS.white)
-    .text(`${pageNumber} / ${totalPages}`, pageWidth - 80, footerY + 5, {
-      width: 30,
-      align: "right",
-    });
 }
 
 export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const doc = new PDFDocument({
     size: "A4",
-    margins: { top: 0, bottom: 40, left: 50, right: 50 },
     autoFirstPage: true,
+    bufferPages: true, // Importante para controlar as páginas
   });
 
   const pageWidth = doc.page.width;
@@ -158,21 +135,10 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
 
   // ============ PAGE 1: COVER ============
 
-  doc.rect(0, 0, pageWidth, doc.page.height).fill(COLORS.white);
-
   const coverImagePath = "./server/assets/capa-corel.png";
-
-  // Usar fit para garantir que a imagem caiba na página
-  doc.image(coverImagePath, 0, 0, {
-    fit: [pageWidth, doc.page.height],
-  });
-  
-  // Reposicionar o cursor para evitar quebra de página automática
-  doc.x = 0;
-  doc.y = 0;
+  doc.image(coverImagePath, 0, 0, { width: pageWidth });
 
   const leftMarginCover = 25;
-  const textWidthCover = pageWidth - leftMarginCover - 60;
 
   let currentY = 520;
 
@@ -180,9 +146,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .font("Helvetica-Bold")
     .fontSize(30)
     .fillColor(COLORS.dark)
-    .text("PROPOSTA", leftMarginCover, currentY, {
-      width: textWidthCover,
-    });
+    .text("PROPOSTA", leftMarginCover, currentY, { lineBreak: false });
 
   currentY += 30;
 
@@ -190,9 +154,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .font("Helvetica-Bold")
     .fontSize(30)
     .fillColor(COLORS.primary)
-    .text("COMERCIAL", leftMarginCover, currentY, {
-      width: textWidthCover,
-    });
+    .text("COMERCIAL", leftMarginCover, currentY, { lineBreak: false });
 
   currentY += 55;
 
@@ -203,6 +165,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
   const totalCardsWidth = pageWidth - leftMarginCover - 60;
   const singleCardWidth = (totalCardsWidth - gapBetweenCards) / 2;
 
+  // CARD 1 – CLIENTE
   drawRoundedRect(
     doc,
     leftMarginCover,
@@ -220,7 +183,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica-Bold")
     .fillColor(COLORS.textLight)
-    .text("CLIENTE", infoX, infoY);
+    .text("CLIENTE", infoX, infoY, { lineBreak: false });
 
   infoY += 14;
 
@@ -228,20 +191,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(16)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.nomeCliente, infoX, infoY, {
-      width: singleCardWidth - 36,
-    });
+    .text(proposal.nomeCliente, infoX, infoY, { width: singleCardWidth - 36, lineBreak: false });
 
-  infoY = doc.y + 6;
+  infoY += 20;
 
   if (proposal.cidadeUf) {
     doc
       .fontSize(10)
       .font("Helvetica")
       .fillColor(COLORS.textLight)
-      .text(proposal.cidadeUf, infoX, infoY);
+      .text(proposal.cidadeUf, infoX, infoY, { lineBreak: false });
   }
 
+  // CARD 2 – DATA / VALIDADE
   const secondCardX = leftMarginCover + singleCardWidth + gapBetweenCards;
 
   drawRoundedRect(
@@ -261,7 +223,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica-Bold")
     .fillColor(COLORS.textLight)
-    .text("DATA", infoX, infoY);
+    .text("DATA", infoX, infoY, { lineBreak: false });
 
   infoY += 14;
 
@@ -269,9 +231,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(formatDate(proposal.dataProposta), infoX, infoY, {
-      width: singleCardWidth - 36,
-    });
+    .text(formatDate(proposal.dataProposta), infoX, infoY, { lineBreak: false });
 
   infoY += 24;
 
@@ -279,7 +239,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica-Bold")
     .fillColor(COLORS.textLight)
-    .text("VALIDADE", infoX, infoY);
+    .text("VALIDADE", infoX, infoY, { lineBreak: false });
 
   infoY += 14;
 
@@ -287,20 +247,14 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(`${proposal.validadeDias} dias`, infoX, infoY);
+    .text(`${proposal.validadeDias} dias`, infoX, infoY, { lineBreak: false });
 
+  // Logo
   const logoPath = "./server/assets/Logo Átomo Solar.png";
-  const logoWidth = 120;
-  const bottomLogoY = 120;
+  doc.image(logoPath, pageWidth - 170, doc.page.height - 120, { width: 120 });
 
-  // Usar save/restore para que o logo não afete a posição do cursor
-  doc.save();
-  doc.image(logoPath, pageWidth - logoWidth - 50, doc.page.height - bottomLogoY, {
-    width: logoWidth,
-  });
-  doc.restore();
-
-  drawFooter(doc, 1, 3, pageWidth, contentWidth, leftMargin);
+  // Rodapé página 1
+  drawFooter(doc, pageWidth);
 
   // ============ PAGE 2: TECHNICAL SPECS ============
 
@@ -314,7 +268,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(18)
     .font("Helvetica-Bold")
     .fillColor(COLORS.white)
-    .text("DIMENSIONAMENTO DO SISTEMA", leftMargin, 22);
+    .text("DIMENSIONAMENTO DO SISTEMA", leftMargin, 22, { lineBreak: false });
 
   currentY = 90;
 
@@ -329,7 +283,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       { width: contentWidth, align: "justify", lineGap: 4 }
     );
 
-  currentY = doc.y + 25;
+  currentY = 145; // Posição fixa após o texto
 
   const cardWidth = (contentWidth - 20) / 3;
 
@@ -363,14 +317,9 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     "Espaço necessário"
   );
 
-  currentY += 100;
+  currentY = 250;
 
-  currentY = drawSectionHeader(
-    doc,
-    "EQUIPAMENTOS PRINCIPAIS",
-    currentY,
-    contentWidth
-  );
+  currentY = drawSectionHeader(doc, "EQUIPAMENTOS PRINCIPAIS", currentY, contentWidth);
 
   const tableX = leftMargin;
   const colItemWidth = 180;
@@ -384,16 +333,11 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica-Bold")
     .fillColor(COLORS.textLight)
-    .text("ITEM", tableX + 12, currentY + 8, { width: colItemWidth - 24 });
+    .text("ITEM", tableX + 12, currentY + 8, { lineBreak: false });
 
-  doc.text("MODELO", tableX + colItemWidth + 12, currentY + 8, {
-    width: colModelWidth - 24,
-  });
+  doc.text("MODELO", tableX + colItemWidth + 12, currentY + 8, { lineBreak: false });
 
-  doc.text("QTD", tableX + colItemWidth + colModelWidth + 12, currentY + 8, {
-    width: colQtyWidth - 24,
-    align: "right",
-  });
+  doc.text("QTD", tableX + colItemWidth + colModelWidth + 12, currentY + 8, { lineBreak: false });
 
   currentY += rowHeight + 4;
 
@@ -403,26 +347,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text("Módulos Fotovoltaicos", tableX + 12, currentY + 8, {
-      width: colItemWidth - 24,
-    });
+    .text("Módulos Fotovoltaicos", tableX + 12, currentY + 8, { lineBreak: false });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.text)
-    .text(proposal.modeloModulo, tableX + colItemWidth + 12, currentY + 8, {
-      width: colModelWidth - 24,
-    });
+    .text(proposal.modeloModulo, tableX + colItemWidth + 12, currentY + 8, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.quantidadeModulo.toString(), tableX + colItemWidth + colModelWidth, currentY + 8, {
-      width: colQtyWidth - 12,
-      align: "right",
-    });
+    .text(proposal.quantidadeModulo.toString(), tableX + colItemWidth + colModelWidth + 12, currentY + 8, { lineBreak: false });
 
   currentY += rowHeight + 2;
 
@@ -432,35 +369,23 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text("Inversor(es)", tableX + 12, currentY + 8, {
-      width: colItemWidth - 24,
-    });
+    .text("Inversor(es)", tableX + 12, currentY + 8, { lineBreak: false });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.text)
-    .text(proposal.modeloInversor, tableX + colItemWidth + 12, currentY + 8, {
-      width: colModelWidth - 24,
-    });
+    .text(proposal.modeloInversor, tableX + colItemWidth + 12, currentY + 8, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.quantidadeInversor.toString(), tableX + colItemWidth + colModelWidth, currentY + 8, {
-      width: colQtyWidth - 12,
-      align: "right",
-    });
+    .text(proposal.quantidadeInversor.toString(), tableX + colItemWidth + colModelWidth + 12, currentY + 8, { lineBreak: false });
 
-  currentY += rowHeight + 20;
+  currentY += rowHeight + 30;
 
-  currentY = drawSectionHeader(
-    doc,
-    "GARANTIAS INCLUÍDAS",
-    currentY,
-    contentWidth
-  );
+  currentY = drawSectionHeader(doc, "GARANTIAS INCLUÍDAS", currentY, contentWidth);
 
   const warrantyWidth = (contentWidth - 20) / 3;
 
@@ -470,17 +395,13 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("SERVIÇOS", leftMargin + 12, currentY + 12, {
-      width: warrantyWidth - 24,
-    });
+    .text("SERVIÇOS", leftMargin + 12, currentY + 12, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.dark)
-    .text(proposal.garantiaServicos, leftMargin + 12, currentY + 32, {
-      width: warrantyWidth - 24,
-    });
+    .text(proposal.garantiaServicos, leftMargin + 12, currentY + 32, { width: warrantyWidth - 24, lineBreak: false });
 
   const modsX = leftMargin + warrantyWidth + 10;
 
@@ -490,25 +411,19 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("MÓDULOS FOTOVOLTAICOS", modsX + 12, currentY + 12, {
-      width: warrantyWidth - 24,
-    });
+    .text("MÓDULOS FOTOVOLTAICOS", modsX + 12, currentY + 12, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.dark)
-    .text(proposal.garantiaModulosEquipamento, modsX + 12, currentY + 32, {
-      width: warrantyWidth - 24,
-    });
+    .text(proposal.garantiaModulosEquipamento, modsX + 12, currentY + 32, { width: warrantyWidth - 24, lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.dark)
-    .text(proposal.garantiaModulosPerformance, modsX + 12, currentY + 48, {
-      width: warrantyWidth - 24,
-    });
+    .text(proposal.garantiaModulosPerformance, modsX + 12, currentY + 48, { width: warrantyWidth - 24, lineBreak: false });
 
   const invX = leftMargin + (warrantyWidth + 10) * 2;
 
@@ -518,17 +433,13 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("INVERSORES", invX + 12, currentY + 12, {
-      width: warrantyWidth - 24,
-    });
+    .text("INVERSORES", invX + 12, currentY + 12, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.dark)
-    .text(proposal.garantiaInversor, invX + 12, currentY + 32, {
-      width: warrantyWidth - 24,
-    });
+    .text(proposal.garantiaInversor, invX + 12, currentY + 32, { width: warrantyWidth - 24, lineBreak: false });
 
   currentY += 100;
 
@@ -540,20 +451,12 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       "A garantia dos equipamentos é de responsabilidade dos fabricantes.",
       leftMargin,
       currentY,
-      {
-        width: contentWidth,
-        align: "center",
-      }
+      { width: contentWidth, align: "center", lineBreak: false }
     );
 
-  currentY += 35;
+  currentY += 45;
 
-  currentY = drawSectionHeader(
-    doc,
-    "CRONOGRAMA DE EXECUÇÃO",
-    currentY,
-    contentWidth
-  );
+  currentY = drawSectionHeader(doc, "CRONOGRAMA DE EXECUÇÃO", currentY, contentWidth);
 
   const timelineSteps = [
     { day: "Dia A", title: "Aprovação da Proposta Comercial", desc: "" },
@@ -577,7 +480,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .fontSize(8)
       .font("Helvetica-Bold")
       .fillColor(index === 0 ? COLORS.white : COLORS.secondary)
-      .text(step.day, stepX, currentY + 10, { width: stepWidth, align: "center" });
+      .text(step.day, stepX, currentY + 10, { width: stepWidth, align: "center", lineBreak: false });
 
     if (index < timelineSteps.length - 1) {
       doc
@@ -592,20 +495,21 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .fontSize(9)
       .font("Helvetica-Bold")
       .fillColor(COLORS.dark)
-      .text(step.title, stepX, currentY + 40, { width: stepWidth, align: "center" });
+      .text(step.title, stepX, currentY + 40, { width: stepWidth, align: "center", lineBreak: false });
 
     if (step.desc) {
       doc
         .fontSize(8)
         .font("Helvetica")
         .fillColor(COLORS.textLight)
-        .text(step.desc, stepX, currentY + 55, { width: stepWidth, align: "center" });
+        .text(step.desc, stepX, currentY + 55, { width: stepWidth, align: "center", lineBreak: false });
     }
 
     doc.restore();
   });
 
-  drawFooter(doc, 2, 3, pageWidth, contentWidth, leftMargin);
+  // Rodapé página 2
+  drawFooter(doc, pageWidth);
 
   // ============ PAGE 3: INVESTMENT ============
 
@@ -617,7 +521,7 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(18)
     .font("Helvetica-Bold")
     .fillColor(COLORS.white)
-    .text("INVESTIMENTO E CONDIÇÕES", leftMargin, 22);
+    .text("INVESTIMENTO E CONDIÇÕES", leftMargin, 22, { lineBreak: false });
 
   currentY = 90;
 
@@ -629,21 +533,21 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(12)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("VALOR DO INVESTIMENTO", leftMargin + 25, currentY + 25);
+    .text("VALOR DO INVESTIMENTO", leftMargin + 25, currentY + 25, { lineBreak: false });
 
   doc
     .fontSize(36)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(formatCurrency(proposal.valorTotalAvista), leftMargin + 25, currentY + 50);
+    .text(formatCurrency(proposal.valorTotalAvista), leftMargin + 25, currentY + 50, { lineBreak: false });
 
   doc
     .fontSize(11)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Pagamento à vista", leftMargin + 25, currentY + 92);
+    .text("Pagamento à vista", leftMargin + 25, currentY + 92, { lineBreak: false });
 
-  currentY += 150;
+  currentY = 230;
 
   currentY = drawSectionHeader(doc, "O QUE ESTÁ INCLUSO", currentY, contentWidth);
 
@@ -664,25 +568,20 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       .fontSize(10)
       .font("Helvetica-Bold")
       .fillColor(COLORS.white)
-      .text("✓", leftMargin + 4, itemY + 2);
+      .text("✓", leftMargin + 4, itemY + 2, { lineBreak: false });
 
     doc
       .fontSize(11)
       .font("Helvetica")
       .fillColor(COLORS.text)
-      .text(item, leftMargin + 25, itemY);
+      .text(item, leftMargin + 25, itemY, { width: contentWidth - 25, lineBreak: false });
 
     doc.restore();
   });
 
-  currentY += includedItems.length * 28 + 30;
+  currentY += includedItems.length * 28 + 20;
 
-  currentY = drawSectionHeader(
-    doc,
-    "SOLUÇÕES FINANCEIRAS",
-    currentY,
-    contentWidth
-  );
+  currentY = drawSectionHeader(doc, "SOLUÇÕES FINANCEIRAS", currentY, contentWidth);
 
   doc
     .fontSize(11)
@@ -692,10 +591,10 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
       "Temos parcerias com diversos bancos como Santander, BV Financeira, Sol Fácil, Credisolaris, dentre outros. Faça uma análise da sua taxa real conosco.",
       leftMargin,
       currentY,
-      { width: contentWidth, align: "justify", lineGap: 4 }
+      { width: contentWidth, align: "justify", lineGap: 4, lineBreak: false }
     );
 
-  currentY = doc.y + 40;
+  currentY += 50;
 
   drawRoundedRect(doc, leftMargin, currentY, contentWidth, 70, 10, COLORS.background);
 
@@ -705,22 +604,20 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text("VALIDADE DA PROPOSTA", leftMargin + 20, currentY + 18);
+    .text("VALIDADE DA PROPOSTA", leftMargin + 20, currentY + 18, { lineBreak: false });
 
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor(COLORS.text)
     .text(
-      `Esta proposta é válida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de emissão (${formatDate(
-        proposal.dataProposta
-      )}).`,
+      `Esta proposta é válida em todos os seus termos por ${proposal.validadeDias} dias corridos contados a partir da data de emissão (${formatDate(proposal.dataProposta)}).`,
       leftMargin + 20,
       currentY + 38,
-      { width: contentWidth - 40 }
+      { width: contentWidth - 40, lineBreak: false }
     );
 
-  currentY += 100;
+  currentY += 90;
 
   currentY = drawSectionHeader(doc, "ACEITE DA PROPOSTA", currentY, contentWidth);
 
@@ -737,19 +634,13 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(proposal.nomeCliente, leftMargin, currentY + 58, {
-      width: signatureWidth,
-      align: "center",
-    });
+    .text(proposal.nomeCliente, leftMargin, currentY + 58, { width: signatureWidth, align: "center", lineBreak: false });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Cliente", leftMargin, currentY + 74, {
-      width: signatureWidth,
-      align: "center",
-    });
+    .text("Cliente", leftMargin, currentY + 74, { width: signatureWidth, align: "center", lineBreak: false });
 
   doc
     .moveTo(leftMargin + signatureWidth + 40, currentY + 50)
@@ -762,21 +653,41 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fontSize(11)
     .font("Helvetica-Bold")
     .fillColor(COLORS.dark)
-    .text(RESPONSIBLE_NAME, leftMargin + signatureWidth + 40, currentY + 58, {
-      width: signatureWidth,
-      align: "center",
-    });
+    .text(RESPONSIBLE_NAME, leftMargin + signatureWidth + 40, currentY + 58, { width: signatureWidth, align: "center", lineBreak: false });
 
   doc
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.textLight)
-    .text("Responsável Comercial", leftMargin + signatureWidth + 40, currentY + 74, {
-      width: signatureWidth,
-      align: "center",
-    });
+    .text("Responsável Comercial", leftMargin + signatureWidth + 40, currentY + 74, { width: signatureWidth, align: "center", lineBreak: false });
 
-  drawFooter(doc, 3, 3, pageWidth, contentWidth, leftMargin);
+  currentY += 100;
+
+  // Informações da empresa
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text(
+      `${COMPANY_NAME} | ${COMPANY_ADDRESS}`,
+      leftMargin,
+      currentY,
+      { width: contentWidth, align: "center" }
+    );
+
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(COLORS.textLight)
+    .text(
+      `${COMPANY_PHONE} | ${COMPANY_EMAIL}`,
+      leftMargin,
+      currentY + 15,
+      { width: contentWidth, align: "center", lineBreak: false }
+    );
+
+  // Rodapé página 3
+  drawFooter(doc, pageWidth);
 
   return doc;
 }
