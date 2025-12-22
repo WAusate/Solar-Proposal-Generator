@@ -383,6 +383,28 @@ export function generateProposalPDF(proposal: Proposal): PDFKit.PDFDocument {
     .fillColor(COLORS.dark)
     .text(proposal.quantidadeInversor.toString(), tableX + colItemWidth + colModelWidth + 12, currentY + 8, { lineBreak: false });
 
+  // Renderizar Outros Itens se houver
+  if (proposal.outrosItens && proposal.outrosItens.trim()) {
+    currentY += rowHeight + 2;
+
+    drawRoundedRect(doc, tableX, currentY, contentWidth, rowHeight, 4, COLORS.white);
+
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.dark)
+      .text("Outros Itens", tableX + 12, currentY + 8, { lineBreak: false });
+
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor(COLORS.text)
+      .text(proposal.outrosItens, tableX + colItemWidth + 12, currentY + 8, {
+        width: colModelWidth - 24,
+        lineBreak: false,
+      });
+  }
+
   currentY += rowHeight + 30;
 
   currentY = drawSectionHeader(doc, "GARANTIAS INCLUÍDAS", currentY, contentWidth);
